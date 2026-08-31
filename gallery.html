@@ -8,9 +8,8 @@
   :root{
     --bg:#f5f3ff; --card:#ffffff; --ink:#1f2130; --sub:#6b6f85;
     --brand:#6d4aff; --brand-dark:#5334e0; --line:#e7e4f5;
-    --beginner:#22a06b; --beginner-bg:#e6f7ef;
-    --inter:#c98a1a; --inter-bg:#fdf1dc;
-    --advanced:#a83fd1; --advanced-bg:#f6e6fb;
+    --gemini:#1a73e8; --gemini-bg:#e8f0fe;
+    --apps:#188038; --apps-bg:#e6f4ea;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -40,14 +39,6 @@
     font-size:14px;font-family:inherit;background:#fbfaff;}
   form#submitForm textarea{resize:vertical;min-height:60px;}
   form#submitForm .field{display:flex;flex-direction:column;}
-  .level-radios{display:flex;gap:8px;}
-  .level-radios label{flex:1;text-align:center;border:2px solid var(--line);border-radius:10px;
-    padding:8px 4px;cursor:pointer;font-weight:700;font-size:13.5px;color:var(--sub);}
-  .level-radios input{display:none;}
-  .level-radios input:checked + span{color:inherit;}
-  .level-radios label:has(input:checked)[data-l="beginner"]{background:var(--beginner-bg);border-color:var(--beginner);color:var(--beginner);}
-  .level-radios label:has(input:checked)[data-l="inter"]{background:var(--inter-bg);border-color:var(--inter);color:var(--inter);}
-  .level-radios label:has(input:checked)[data-l="advanced"]{background:var(--advanced-bg);border-color:var(--advanced);color:var(--advanced);}
 
   #submitForm button{grid-column:1/-1;background:var(--brand);color:#fff;border:none;
     border-radius:12px;padding:12px;font-weight:800;font-size:15px;cursor:pointer;margin-top:4px;}
@@ -55,11 +46,7 @@
   #submitForm button:disabled{opacity:.5;}
   .hint{font-size:12px;color:var(--sub);margin-top:2px;}
 
-  .toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;}
-  .chip{padding:7px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;
-    cursor:pointer;font-size:13.5px;font-weight:700;color:var(--sub);}
-  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .toolbar{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
   .sortsel{border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;background:#fff;}
 
   .top3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
@@ -72,17 +59,14 @@
     border:1px solid var(--line);display:flex;flex-direction:column;}
   .gcard img{width:100%;height:150px;object-fit:cover;background:#eee;display:block;}
   .gcard .body{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1;}
-  .badge{align-self:flex-start;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px;}
-  .badge.beginner{background:var(--beginner-bg);color:var(--beginner);}
-  .badge.inter{background:var(--inter-bg);color:var(--inter);}
-  .badge.advanced{background:var(--advanced-bg);color:var(--advanced);}
   .gcard .title{font-weight:800;font-size:15px;}
   .gcard .desc{font-size:13px;color:var(--sub);flex:1;white-space:pre-wrap;}
   .gcard .who{font-size:12px;color:var(--sub);}
+  .gcard .links{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .gcard .link-btn{text-decoration:none;font-size:12px;font-weight:700;padding:7px 10px;border-radius:8px;}
+  .gcard .link-btn.gemini{background:var(--gemini-bg);color:var(--gemini);}
+  .gcard .link-btn.apps{background:var(--apps-bg);color:var(--apps);}
   .gcard .row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
-  .gcard .link-btn{background:var(--brand);color:#fff;text-decoration:none;font-size:12.5px;
-    font-weight:700;padding:7px 12px;border-radius:8px;}
-  .gcard .link-btn:hover{background:var(--brand-dark);}
   .like-btn{border:none;background:#fff0f3;color:#e0416a;border-radius:999px;padding:6px 12px;
     font-size:12.5px;font-weight:800;cursor:pointer;}
   .like-btn.liked{background:#e0416a;color:#fff;}
@@ -121,14 +105,6 @@
         <input type="text" name="school" maxlength="30" placeholder="예: 광수중학교">
       </div>
       <div class="field full">
-        <label>레벨</label>
-        <div class="level-radios">
-          <label data-l="beginner"><input type="radio" name="level" value="beginner" checked><span>🌱 초급</span></label>
-          <label data-l="inter"><input type="radio" name="level" value="inter"><span>🔧 중급</span></label>
-          <label data-l="advanced"><input type="radio" name="level" value="advanced"><span>🚀 고급</span></label>
-        </div>
-      </div>
-      <div class="field full">
         <label>작품 제목</label>
         <input type="text" name="title" maxlength="60" required placeholder="예: 옴의 법칙 시뮬레이터">
       </div>
@@ -137,8 +113,13 @@
         <textarea name="desc" maxlength="300" placeholder="어떤 걸 만들었는지, 어떤 수업에 쓸 수 있는지 적어주세요"></textarea>
       </div>
       <div class="field full">
-        <label>결과물 링크 (Claude 공유 링크 / GitHub Pages 주소 등)</label>
-        <input type="url" name="link" placeholder="https://...">
+        <label>✨ 제미나이 공유 링크 (필수)</label>
+        <input type="url" name="link" required placeholder="https://gemini.google.com/share/...">
+        <div class="hint">제미나이 화면 위쪽 공유 버튼으로 만든 링크를 붙여넣어주세요.</div>
+      </div>
+      <div class="field full">
+        <label>🚀 Apps Script 웹앱 링크 (고급 도전자만, 선택)</label>
+        <input type="url" name="appsScriptLink" placeholder="https://script.google.com/macros/s/.../exec">
       </div>
       <div class="field full">
         <label>스크린샷 (선택, 최대 1장)</label>
@@ -150,12 +131,6 @@
   </div>
 
   <div class="toolbar">
-    <div class="chips">
-      <div class="chip active" data-filter="all">전체</div>
-      <div class="chip" data-filter="beginner">🌱 초급</div>
-      <div class="chip" data-filter="inter">🔧 중급</div>
-      <div class="chip" data-filter="advanced">🚀 고급</div>
-    </div>
     <select class="sortsel" id="sortsel">
       <option value="new">최신순</option>
       <option value="likes">인기순</option>
@@ -172,7 +147,6 @@
 <script>
 const DB = "https://gwangsu-on-default-rtdb.firebaseio.com";
 const GALLERY_PATH = "years/2026/workshopTT/gallery";
-const LEVEL_LABEL = {beginner:'🌱 초급', inter:'🔧 중급', advanced:'🚀 고급'};
 
 let toastTimer;
 function toast(msg, isErr){
@@ -195,7 +169,6 @@ function getToken(){
   }catch(e){ return 'anon'; }
 }
 
-let currentFilter = 'all';
 let currentSort = 'new';
 let cache = [];
 
@@ -211,7 +184,6 @@ async function loadGallery(){
 function render(){
   const grid = document.getElementById('grid');
   let items = cache.slice();
-  if(currentFilter !== 'all') items = items.filter(it=>it.level===currentFilter);
 
   const likeCount = it => Object.keys(it.likes||{}).length;
 
@@ -238,12 +210,15 @@ function render(){
     <div class="gcard">
       ${it.image ? `<img src="${it.image}" alt="">` : ''}
       <div class="body">
-        <span class="badge ${it.level}">${LEVEL_LABEL[it.level]||''}</span>
         <div class="title">${esc(it.title)}</div>
         <div class="desc">${esc(it.desc)}</div>
         <div class="who">${esc(it.name)}${it.school ? ' · '+esc(it.school) : ''}</div>
+        <div class="links">
+          ${it.link ? `<a class="link-btn gemini" href="${escAttr(it.link)}" target="_blank" rel="noopener">✨ 제미나이 링크</a>` : ''}
+          ${it.appsScriptLink ? `<a class="link-btn apps" href="${escAttr(it.appsScriptLink)}" target="_blank" rel="noopener">🚀 Apps Script 링크</a>` : ''}
+        </div>
         <div class="row">
-          ${it.link ? `<a class="link-btn" href="${escAttr(it.link)}" target="_blank" rel="noopener">결과물 보기 →</a>` : '<span></span>'}
+          <span></span>
           <button class="like-btn ${liked?'liked':''}" onclick="toggleLike('${it.id}', this)">♥ ${n}</button>
         </div>
       </div>
@@ -271,14 +246,6 @@ async function toggleLike(id, btn){
   finally{ btn.disabled = false; }
 }
 
-document.querySelectorAll('.chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
-    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-    chip.classList.add('active');
-    currentFilter = chip.dataset.filter;
-    render();
-  });
-});
 document.getElementById('sortsel').addEventListener('change', e=>{
   currentSort = e.target.value; render();
 });
@@ -316,10 +283,10 @@ document.getElementById('submitForm').addEventListener('submit', async (e)=>{
     const payload = {
       name: f.name.value.trim().slice(0,30),
       school: f.school.value.trim().slice(0,30),
-      level: f.level.value,
       title: f.title.value.trim().slice(0,60),
       desc: f.desc.value.trim().slice(0,300),
       link: f.link.value.trim(),
+      appsScriptLink: f.appsScriptLink.value.trim(),
       createdAt: Date.now()
     };
     const file = f.image.files[0];
