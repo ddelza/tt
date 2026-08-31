@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>바이브 코딩 워크숍 — 안내자료</title>
+<style>
+  :root{
+    --bg:#f5f3ff; --card:#ffffff; --ink:#1f2130; --sub:#6b6f85;
+    --brand:#6d4aff; --brand-dark:#5334e0; --line:#e7e4f5;
+    --beginner:#22a06b; --beginner-bg:#e6f7ef;
+    --inter:#c98a1a; --inter-bg:#fdf1dc;
+    --advanced:#a83fd1; --advanced-bg:#f6e6fb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.6;}
+  a{color:inherit;}
+  header.hero{background:linear-gradient(135deg,#6d4aff,#9b7bff);color:#fff;
+    padding:36px 20px 28px;text-align:center;}
+  header.hero h1{margin:0 0 6px;font-size:26px;}
+  header.hero p{margin:2px 0;opacity:.95;font-size:14.5px;}
+  .navbtns{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .navbtns a{background:#ffffff;color:var(--brand-dark);text-decoration:none;
+    padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .navbtns a.ghost{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.6);}
+  main{max-width:900px;margin:0 auto;padding:24px 16px 60px;}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{flex:1;min-width:100px;padding:12px 10px;border-radius:14px;border:2px solid var(--line);
+    background:#fff;text-align:center;cursor:pointer;font-weight:700;font-size:14.5px;
+    transition:.15s;color:var(--sub);}
+  .tab:hover{border-color:var(--brand);}
+  .tab.active[data-level="beginner"]{background:var(--beginner-bg);border-color:var(--beginner);color:var(--beginner);}
+  .tab.active[data-level="inter"]{background:var(--inter-bg);border-color:var(--inter);color:var(--inter);}
+  .tab.active[data-level="advanced"]{background:var(--advanced-bg);border-color:var(--advanced);color:var(--advanced);}
+
+  .panel{display:none;background:var(--card);border-radius:18px;padding:24px 22px;
+    box-shadow:0 4px 20px rgba(80,60,180,.07);border:1px solid var(--line);}
+  .panel.show{display:block;}
+  .panel h2{margin:0 0 4px;font-size:20px;}
+  .meta-row{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 18px;font-size:13.5px;color:var(--sub);}
+  .meta-row span{background:var(--bg);padding:5px 12px;border-radius:999px;}
+  .lead{color:var(--sub);font-size:14.5px;margin-bottom:18px;}
+
+  ol.steps{list-style:none;margin:0;padding:0;counter-reset:step;}
+  ol.steps>li{counter-increment:step;position:relative;padding:2px 0 18px 40px;font-size:14.5px;}
+  ol.steps>li::before{content:counter(step);position:absolute;left:0;top:-1px;
+    width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;
+    font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  ol.steps>li::after{content:"";position:absolute;left:13.5px;top:28px;bottom:-4px;width:2px;background:var(--line);}
+  ol.steps>li:last-child::after{display:none;}
+
+  .prompt-box{background:#f8f7ff;border:1.5px dashed #c9bdfa;border-radius:12px;
+    padding:12px 14px;margin:10px 0;font-size:13.8px;position:relative;white-space:pre-wrap;}
+  .prompt-box .copy{position:absolute;top:8px;right:8px;background:var(--brand);color:#fff;
+    border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:700;}
+  .prompt-box .copy:hover{background:var(--brand-dark);}
+  .prompt-box .copy.copied{background:var(--beginner);}
+
+  .tip{background:#fff8e1;border-left:4px solid #f0b429;border-radius:8px;
+    padding:10px 14px;margin:16px 0;font-size:13.8px;}
+  .tip b{color:#a06a00;}
+
+  h3.sub{font-size:15px;margin:22px 0 10px;color:var(--ink);}
+
+  /* QnA board */
+  section.board{margin-top:36px;}
+  section.board h2{font-size:19px;margin-bottom:4px;}
+  section.board p.lead{margin-bottom:16px;}
+  .qform{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .qform input, .qform textarea{border:1.5px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:14px;font-family:inherit;}
+  .qform input[name=qname]{flex:0 0 140px;}
+  .qform textarea{flex:1 1 260px;resize:none;min-height:42px;}
+  .qform button{background:var(--brand);color:#fff;border:none;border-radius:10px;
+    padding:0 20px;font-weight:700;cursor:pointer;font-size:14px;}
+  .qform button:hover{background:var(--brand-dark);}
+  .qform button:disabled{opacity:.5;cursor:default;}
+
+  .wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+  .note{border-radius:12px;padding:14px;font-size:13.6px;box-shadow:0 2px 6px rgba(0,0,0,.06);
+    min-height:70px;word-break:break-word;}
+  .note .who{font-weight:800;font-size:12.5px;margin-bottom:6px;opacity:.85;}
+  .note .when{font-size:11px;opacity:.55;margin-top:8px;}
+  .empty{color:var(--sub);font-size:13.5px;padding:20px 0;text-align:center;}
+
+  footer{text-align:center;color:var(--sub);font-size:12.5px;padding:20px;}
+
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:#1f2130;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;
+    font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;pointer-events:none;
+    transition:.25s;z-index:999;max-width:90vw;text-align:center;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.err{background:#c0304a;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>🧬 바이브 코딩 워크숍</h1>
+  <p>과학수업 연구회 · 2026-09-05(토) · 나만의 수업 도구 직접 만들기</p>
+  <p style="opacity:.85;font-size:13px;">이 페이지에서 안내자료를 보고, 질문·아이디어를 나눠주세요. 완성한 작품은 갤러리에 제출!</p>
+  <div class="navbtns">
+    <a href="gallery.html">🖼️ 작품 갤러리 보러가기</a>
+    <a href="#board" class="ghost">💬 질문/아이디어 남기기</a>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-level="beginner">🌱 초급<br><small style="font-weight:500">시뮬레이션 만들기</small></div>
+    <div class="tab" data-level="inter">🔧 중급<br><small style="font-weight:500">API · Apps Script</small></div>
+    <div class="tab" data-level="advanced">🚀 고급<br><small style="font-weight:500">GitHub 배포</small></div>
+  </div>
+
+  <!-- 초급 -->
+  <div class="panel show" id="panel-beginner">
+    <h2>🌱 초급 — 대화만으로 수업용 시뮬레이션 만들기</h2>
+    <div class="meta-row">
+      <span>준비물: Claude 계정만 (설치 없음)</span>
+      <span>예상 소요: 30~40분</span>
+      <span>결과물: 채팅에서 바로 나오는 링크</span>
+    </div>
+    <p class="lead">코드를 한 줄도 안 봐도 됩니다. "이런 걸 만들고 싶다"를 구체적으로 말로 설명하고, 나온 결과를 보면서 계속 다듬어가는 것이 전부예요.</p>
+
+    <ol class="steps">
+      <li><b>Claude.ai(또는 앱)에 로그인</b>하고 새 대화를 엽니다.</li>
+      <li>프롬프트를 쓸 때 이 4가지를 포함하면 결과가 훨씬 좋아집니다: <b>① 무엇을(과학 개념) ② 누구를(대상 학년) ③ 어떻게 조작할지(슬라이더/버튼/입력값) ④ 무엇을 보여줄지(그래프/애니메이션/숫자)</b></li>
+      <li>아래 예시를 그대로 복사해서 붙여넣어 보세요.
+        <div class="prompt-box">중학교 2학년 대상으로 옴의 법칙(V=IR) 시뮬레이터를 만들어줘. 전압과 저항을 슬라이더로 조절하면 전류가 실시간으로 계산되고, 회로 애니메이션이랑 V-I 그래프도 같이 보였으면 좋겠어.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">고등학교 지구과학 수업용으로 태양계 행성들의 공전을 3D로 보여주는 시뮬레이터를 만들어줘. 공전 속도를 조절할 수 있고, 각 행성을 클릭하면 이름과 거리 정보가 나왔으면 해.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">중학교 3학년 화학 수업용 몰농도 계산기를 만들어줘. 용질의 질량과 몰질량, 용액의 부피를 입력하면 몰농도가 계산되고 단계별 풀이 과정도 같이 보여줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">고등학교 생명과학 수업용 먹이사슬/개체수 변화 시뮬레이션을 만들어줘. 포식자와 피식자 초기 개체수를 입력하면 시간에 따른 개체수 변화 그래프가 애니메이션으로 그려졌으면 좋겠어.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+      </li>
+      <li>결과가 마음에 안 들면 코드를 고치려 하지 말고 <b>"이 부분을 이렇게 바꿔줘"</b>라고 계속 대화하세요. 스크린샷을 그대로 보여주면서 "여기가 이상해"라고만 해도 충분합니다.</li>
+      <li>완성되면 화면의 <b>공유/게시(퍼블리시) 버튼</b>으로 링크를 받아, 갤러리에 제출하세요.</li>
+    </ol>
+
+    <div class="tip"><b>💡 팁</b> 처음부터 완벽한 프롬프트를 쓰려 하지 마세요. 일단 대충 요청해서 나온 걸 보고 "이건 되네, 이건 이렇게 바꾸자"로 다듬는 게 더 빠릅니다.</div>
+  </div>
+
+  <!-- 중급 -->
+  <div class="panel" id="panel-inter">
+    <h2>🔧 중급 — 데이터가 쌓이는 진짜 웹앱 만들기</h2>
+    <div class="meta-row">
+      <span>준비물: 구글 계정 + Claude 계정</span>
+      <span>예상 소요: 40~50분</span>
+      <span>결과물: 구글시트에 데이터가 쌓이는 웹앱</span>
+    </div>
+    <p class="lead">초급이 "혼자 쓰는" 도구였다면, 중급은 <b>"학생들이 제출하면 데이터가 쌓이는"</b> 도구입니다. 구글 스프레드시트를 데이터 저장소로, Apps Script를 서버로 씁니다 — 서버비 없이 이미 있는 구글 계정만으로 가능해요.</p>
+
+    <ol class="steps">
+      <li>무엇을 만들지 정합니다. 예: "학생들이 실험 결과나 설문 답을 제출하면 내가 한눈에 볼 수 있는 페이지"</li>
+      <li>새 <b>구글 스프레드시트</b>를 만들고, 어떤 항목을 받을지 헤더만 정해서 적어둡니다 (예: 이름, 조, 결과값).</li>
+      <li>Claude에게 아래처럼 요청합니다.
+        <div class="prompt-box">구글 스프레드시트를 데이터베이스로 쓰는 학생 제출 페이지를 만들어줘. 학생은 이름, 조, 실험 결과값을 입력해서 제출하고, 나는 다른 페이지에서 제출 현황을 표로 모아볼 수 있어야 해. Apps Script 코드(Code.gs)랑 학생용/교사용 HTML을 각각 줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+      </li>
+      <li>받은 <b>Code.gs</b> 코드를 스프레드시트 메뉴 <b>[확장 프로그램 → Apps Script]</b>에 붙여넣고 저장합니다.</li>
+      <li>오른쪽 위 <b>[배포 → 새 배포]</b> → 유형: <b>웹 앱</b> → 액세스 권한: <b>"모든 사용자"</b>로 설정 후 배포. 나온 URL을 복사해둡니다.</li>
+      <li>받은 HTML 파일 안에서 그 URL이 들어갈 자리(보통 <code>APPS_SCRIPT_URL</code>이라는 변수)에 붙여넣고 저장합니다.</li>
+      <li>HTML 파일을 더블클릭해서 브라우저로 열고, 직접 제출해보며 스프레드시트에 잘 들어가는지 확인합니다.</li>
+      <li>(도전) 생성형 AI 기능도 붙여볼 수 있어요.
+        <div class="prompt-box">여기에 Gemini API를 연결해서, 학생이 제출한 답을 AI가 자동으로 채점하거나 피드백해주는 기능을 추가해줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+      </li>
+    </ol>
+
+    <div class="tip"><b>💡 팁</b> Apps Script 코드를 다시 고쳤다면 반드시 <b>[배포 → 배포 관리 → 편집(✏️) → 버전: 새 버전]</b>으로 업데이트하세요. "새 배포"를 다시 누르면 URL이 바뀌어서 이미 붙여넣은 HTML과 연결이 끊깁니다.</div>
+  </div>
+
+  <!-- 고급 -->
+  <div class="panel" id="panel-advanced">
+    <h2>🚀 고급 — 진짜 인터넷 주소로 배포하기</h2>
+    <div class="meta-row">
+      <span>준비물: GitHub 계정 + Claude Code</span>
+      <span>예상 소요: 30~40분</span>
+      <span>결과물: 누구나 접속 가능한 공개 웹사이트</span>
+    </div>
+    <p class="lead">초급·중급에서 만든 결과물은 지금은 내 컴퓨터/내 대화 안에만 있습니다. <b>GitHub Pages</b>에 배포하면 누구나 URL 하나로 접속할 수 있는 진짜 웹사이트가 됩니다. 서버비는 0원이에요.</p>
+
+    <ol class="steps">
+      <li>GitHub 계정이 없다면 <b>github.com</b>에서 무료로 하나 만듭니다.</li>
+      <li><b>Claude Code</b>를 열고, 지금까지 만든 파일이 있는 폴더에서 시작합니다.</li>
+      <li>이렇게 요청합니다.
+        <div class="prompt-box">이 프로젝트를 GitHub에 새 저장소로 만들고 GitHub Pages로 배포해줘. 내 GitHub 계정은 (아이디)야.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+      </li>
+      <li>Claude Code가 저장소 생성 → 커밋 → 푸시 → Pages 활성화까지 순서대로 대신 해줍니다. 중간에 로그인/인증이 필요하면 안내하는 대로 따라가면 됩니다.</li>
+      <li>1~2분 뒤 <code>https://(아이디).github.io/(저장소이름)/</code> 주소로 접속해서 확인합니다.</li>
+      <li>이후 수정하고 싶으면 <b>"이 부분을 이렇게 고쳐서 다시 배포해줘"</b>라고 하면 자동으로 반영됩니다.</li>
+    </ol>
+
+    <div class="tip"><b>💡 팁</b> 배포 직후 화면이 안 뜨면 1~2분 기다렸다가 새로고침 해보세요 — GitHub가 사이트를 빌드하는 데 시간이 걸립니다.</div>
+  </div>
+
+  <section class="board" id="board">
+    <h2>💬 질문 · 아이디어 나누기</h2>
+    <p class="lead">막히는 부분, 다른 팀에게 공유하고 싶은 팁, "이런 것도 만들 수 있나요?" 무엇이든 남겨주세요. 실시간으로 모두에게 보입니다.</p>
+
+    <form class="qform" id="qform">
+      <input type="text" name="qname" placeholder="이름/팀" maxlength="20" required>
+      <textarea name="qmsg" placeholder="질문이나 아이디어를 적어주세요" maxlength="500" required></textarea>
+      <button type="submit" id="qsubmit">올리기</button>
+    </form>
+
+    <div class="wall" id="wall">
+      <div class="empty">불러오는 중...</div>
+    </div>
+  </section>
+</main>
+
+<footer>🧬 과학수업 연구회 바이브 코딩 워크숍 · 2026-09-05</footer>
+<div id="toast"></div>
+
+<script>
+const DB = "https://gwangsu-on-default-rtdb.firebaseio.com";
+const QNA_PATH = "years/2026/workshopTT/qna";
+
+// tabs
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.level).classList.add('show');
+  });
+});
+
+function copyPrompt(btn){
+  const box = btn.closest('.prompt-box');
+  const text = box.textContent.replace('복사','').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent = '복사됨!';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='복사'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+let toastTimer;
+function toast(msg, isErr){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const NOTE_COLORS = ['#fff3cd','#d9f2e6','#ffe0e6','#e0ecff','#f3e0ff','#ffe9d6'];
+function colorFor(id){
+  let h=0; for(const c of id) h = (h*31 + c.charCodeAt(0)) % 997;
+  return NOTE_COLORS[h % NOTE_COLORS.length];
+}
+
+function timeAgo(ts){
+  const diff = Math.floor((Date.now()-ts)/1000);
+  if(diff < 60) return '방금 전';
+  if(diff < 3600) return Math.floor(diff/60)+'분 전';
+  if(diff < 86400) return Math.floor(diff/3600)+'시간 전';
+  return new Date(ts).toLocaleString('ko-KR');
+}
+
+async function loadQnA(){
+  try{
+    const res = await fetch(`${DB}/${QNA_PATH}.json`);
+    const data = await res.json();
+    const wall = document.getElementById('wall');
+    if(!data){ wall.innerHTML = '<div class="empty">아직 글이 없어요. 첫 글을 남겨보세요!</div>'; return; }
+    const items = Object.entries(data).map(([id,v])=>({id,...v}));
+    items.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    wall.innerHTML = items.map(it=>`
+      <div class="note" style="background:${colorFor(it.id)}">
+        <div class="who">${esc(it.name)}</div>
+        <div>${esc(it.message)}</div>
+        <div class="when">${timeAgo(it.createdAt||0)}</div>
+      </div>
+    `).join('');
+  }catch(e){ console.error(e); }
+}
+
+document.getElementById('qform').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById('qsubmit');
+  btn.disabled = true;
+  const f = e.target;
+  const payload = {
+    name: f.qname.value.trim().slice(0,20),
+    message: f.qmsg.value.trim().slice(0,500),
+    createdAt: Date.now()
+  };
+  try{
+    await fetch(`${DB}/${QNA_PATH}.json`, {method:'POST', body: JSON.stringify(payload)});
+    f.qmsg.value = '';
+    await loadQnA();
+  }catch(err){ toast('전송에 실패했어요. 다시 시도해주세요.', true); }
+  finally{ btn.disabled = false; }
+});
+
+loadQnA();
+setInterval(loadQnA, 4000);
+</script>
+</body>
+</html>

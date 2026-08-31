@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>작품 갤러리 — 바이브 코딩 워크숍</title>
+<style>
+  :root{
+    --bg:#f5f3ff; --card:#ffffff; --ink:#1f2130; --sub:#6b6f85;
+    --brand:#6d4aff; --brand-dark:#5334e0; --line:#e7e4f5;
+    --beginner:#22a06b; --beginner-bg:#e6f7ef;
+    --inter:#c98a1a; --inter-bg:#fdf1dc;
+    --advanced:#a83fd1; --advanced-bg:#f6e6fb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+    line-height:1.6;}
+  a{color:inherit;}
+  header.hero{background:linear-gradient(135deg,#6d4aff,#9b7bff);color:#fff;
+    padding:32px 20px 24px;text-align:center;}
+  header.hero h1{margin:0 0 6px;font-size:24px;}
+  header.hero p{margin:2px 0;opacity:.95;font-size:14px;}
+  .navbtns{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .navbtns a{background:#ffffff;color:var(--brand-dark);text-decoration:none;
+    padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,.12);}
+
+  main{max-width:1100px;margin:0 auto;padding:24px 16px 60px;}
+
+  .card-panel{background:var(--card);border-radius:18px;padding:22px;margin-bottom:22px;
+    box-shadow:0 4px 20px rgba(80,60,180,.07);border:1px solid var(--line);}
+  .card-panel h2{margin:0 0 14px;font-size:18px;}
+
+  form#submitForm{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  form#submitForm .full{grid-column:1/-1;}
+  form#submitForm label{font-size:12.5px;font-weight:700;color:var(--sub);display:block;margin-bottom:4px;}
+  form#submitForm input, form#submitForm select, form#submitForm textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;
+    font-size:14px;font-family:inherit;background:#fbfaff;}
+  form#submitForm textarea{resize:vertical;min-height:60px;}
+  form#submitForm .field{display:flex;flex-direction:column;}
+  .level-radios{display:flex;gap:8px;}
+  .level-radios label{flex:1;text-align:center;border:2px solid var(--line);border-radius:10px;
+    padding:8px 4px;cursor:pointer;font-weight:700;font-size:13.5px;color:var(--sub);}
+  .level-radios input{display:none;}
+  .level-radios input:checked + span{color:inherit;}
+  .level-radios label:has(input:checked)[data-l="beginner"]{background:var(--beginner-bg);border-color:var(--beginner);color:var(--beginner);}
+  .level-radios label:has(input:checked)[data-l="inter"]{background:var(--inter-bg);border-color:var(--inter);color:var(--inter);}
+  .level-radios label:has(input:checked)[data-l="advanced"]{background:var(--advanced-bg);border-color:var(--advanced);color:var(--advanced);}
+
+  #submitForm button{grid-column:1/-1;background:var(--brand);color:#fff;border:none;
+    border-radius:12px;padding:12px;font-weight:800;font-size:15px;cursor:pointer;margin-top:4px;}
+  #submitForm button:hover{background:var(--brand-dark);}
+  #submitForm button:disabled{opacity:.5;}
+  .hint{font-size:12px;color:var(--sub);margin-top:2px;}
+
+  .toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{padding:7px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;
+    cursor:pointer;font-size:13.5px;font-weight:700;color:var(--sub);}
+  .chip.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+  .sortsel{border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;background:#fff;}
+
+  .top3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+  .top3 .t3card{background:linear-gradient(135deg,#fff7e0,#fff);border:1.5px solid #f0d98c;
+    border-radius:14px;padding:12px 14px;font-size:13.5px;}
+  .top3 .t3card .rank{font-size:20px;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
+  .gcard{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 3px 14px rgba(80,60,180,.08);
+    border:1px solid var(--line);display:flex;flex-direction:column;}
+  .gcard img{width:100%;height:150px;object-fit:cover;background:#eee;display:block;}
+  .gcard .body{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1;}
+  .badge{align-self:flex-start;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px;}
+  .badge.beginner{background:var(--beginner-bg);color:var(--beginner);}
+  .badge.inter{background:var(--inter-bg);color:var(--inter);}
+  .badge.advanced{background:var(--advanced-bg);color:var(--advanced);}
+  .gcard .title{font-weight:800;font-size:15px;}
+  .gcard .desc{font-size:13px;color:var(--sub);flex:1;white-space:pre-wrap;}
+  .gcard .who{font-size:12px;color:var(--sub);}
+  .gcard .row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+  .gcard .link-btn{background:var(--brand);color:#fff;text-decoration:none;font-size:12.5px;
+    font-weight:700;padding:7px 12px;border-radius:8px;}
+  .gcard .link-btn:hover{background:var(--brand-dark);}
+  .like-btn{border:none;background:#fff0f3;color:#e0416a;border-radius:999px;padding:6px 12px;
+    font-size:12.5px;font-weight:800;cursor:pointer;}
+  .like-btn.liked{background:#e0416a;color:#fff;}
+
+  .empty{color:var(--sub);text-align:center;padding:40px 0;grid-column:1/-1;}
+  footer{text-align:center;color:var(--sub);font-size:12.5px;padding:20px;}
+
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+    background:#1f2130;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;
+    font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;pointer-events:none;
+    transition:.25s;z-index:999;max-width:90vw;text-align:center;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #toast.err{background:#c0304a;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>🖼️ 작품 갤러리</h1>
+  <p>오늘 만든 결과물을 자랑해주세요! 다른 팀 작품도 구경하고 좋아요를 눌러보세요.</p>
+  <div class="navbtns">
+    <a href="padlet.html">📘 안내자료 · 질문 게시판으로</a>
+  </div>
+</header>
+
+<main>
+  <div class="card-panel">
+    <h2>✏️ 우리 팀 작품 제출하기</h2>
+    <form id="submitForm">
+      <div class="field">
+        <label>이름 / 팀명</label>
+        <input type="text" name="name" maxlength="30" required placeholder="예: 김병선 / 물리팀">
+      </div>
+      <div class="field">
+        <label>학교</label>
+        <input type="text" name="school" maxlength="30" placeholder="예: 광수중학교">
+      </div>
+      <div class="field full">
+        <label>레벨</label>
+        <div class="level-radios">
+          <label data-l="beginner"><input type="radio" name="level" value="beginner" checked><span>🌱 초급</span></label>
+          <label data-l="inter"><input type="radio" name="level" value="inter"><span>🔧 중급</span></label>
+          <label data-l="advanced"><input type="radio" name="level" value="advanced"><span>🚀 고급</span></label>
+        </div>
+      </div>
+      <div class="field full">
+        <label>작품 제목</label>
+        <input type="text" name="title" maxlength="60" required placeholder="예: 옴의 법칙 시뮬레이터">
+      </div>
+      <div class="field full">
+        <label>한 줄 설명</label>
+        <textarea name="desc" maxlength="300" placeholder="어떤 걸 만들었는지, 어떤 수업에 쓸 수 있는지 적어주세요"></textarea>
+      </div>
+      <div class="field full">
+        <label>결과물 링크 (Claude 공유 링크 / GitHub Pages 주소 등)</label>
+        <input type="url" name="link" placeholder="https://...">
+      </div>
+      <div class="field full">
+        <label>스크린샷 (선택, 최대 1장)</label>
+        <input type="file" name="image" accept="image/*">
+        <div class="hint">자동으로 작게 압축돼서 올라갑니다.</div>
+      </div>
+      <button type="submit" id="submitBtn">🚀 제출하기</button>
+    </form>
+  </div>
+
+  <div class="toolbar">
+    <div class="chips">
+      <div class="chip active" data-filter="all">전체</div>
+      <div class="chip" data-filter="beginner">🌱 초급</div>
+      <div class="chip" data-filter="inter">🔧 중급</div>
+      <div class="chip" data-filter="advanced">🚀 고급</div>
+    </div>
+    <select class="sortsel" id="sortsel">
+      <option value="new">최신순</option>
+      <option value="likes">인기순</option>
+    </select>
+  </div>
+
+  <div class="top3" id="top3"></div>
+  <div class="grid" id="grid"><div class="empty">불러오는 중...</div></div>
+</main>
+
+<footer>🧬 과학수업 연구회 바이브 코딩 워크숍 · 2026-09-05</footer>
+<div id="toast"></div>
+
+<script>
+const DB = "https://gwangsu-on-default-rtdb.firebaseio.com";
+const GALLERY_PATH = "years/2026/workshopTT/gallery";
+const LEVEL_LABEL = {beginner:'🌱 초급', inter:'🔧 중급', advanced:'🚀 고급'};
+
+let toastTimer;
+function toast(msg, isErr){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
+
+function getToken(){
+  try{
+    let t = localStorage.getItem('tt_workshop_token');
+    if(!t){ t = 't'+Date.now()+Math.random().toString(36).slice(2); localStorage.setItem('tt_workshop_token', t); }
+    return t;
+  }catch(e){ return 'anon'; }
+}
+
+let currentFilter = 'all';
+let currentSort = 'new';
+let cache = [];
+
+async function loadGallery(){
+  try{
+    const res = await fetch(`${DB}/${GALLERY_PATH}.json`);
+    const data = await res.json();
+    cache = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
+    render();
+  }catch(e){ console.error(e); }
+}
+
+function render(){
+  const grid = document.getElementById('grid');
+  let items = cache.slice();
+  if(currentFilter !== 'all') items = items.filter(it=>it.level===currentFilter);
+
+  const likeCount = it => Object.keys(it.likes||{}).length;
+
+  // top3 (전체 기준, likes>0)
+  const top3 = cache.slice().sort((a,b)=>likeCount(b)-likeCount(a)).filter(it=>likeCount(it)>0).slice(0,3);
+  const t3el = document.getElementById('top3');
+  if(top3.length){
+    t3el.innerHTML = top3.map((it,i)=>`
+      <div class="t3card"><span class="rank">${['🥇','🥈','🥉'][i]}</span>
+      <b>${esc(it.title)}</b> — ${esc(it.name)} <span style="color:#e0416a">♥ ${likeCount(it)}</span></div>
+    `).join('');
+  } else { t3el.innerHTML = ''; }
+
+  if(currentSort==='likes') items.sort((a,b)=>likeCount(b)-likeCount(a));
+  else items.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+  if(!items.length){ grid.innerHTML = '<div class="empty">아직 제출된 작품이 없어요. 첫 작품의 주인공이 되어보세요!</div>'; return; }
+
+  const token = getToken();
+  grid.innerHTML = items.map(it=>{
+    const liked = it.likes && it.likes[token];
+    const n = likeCount(it);
+    return `
+    <div class="gcard">
+      ${it.image ? `<img src="${it.image}" alt="">` : ''}
+      <div class="body">
+        <span class="badge ${it.level}">${LEVEL_LABEL[it.level]||''}</span>
+        <div class="title">${esc(it.title)}</div>
+        <div class="desc">${esc(it.desc)}</div>
+        <div class="who">${esc(it.name)}${it.school ? ' · '+esc(it.school) : ''}</div>
+        <div class="row">
+          ${it.link ? `<a class="link-btn" href="${escAttr(it.link)}" target="_blank" rel="noopener">결과물 보기 →</a>` : '<span></span>'}
+          <button class="like-btn ${liked?'liked':''}" onclick="toggleLike('${it.id}', this)">♥ ${n}</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleLike(id, btn){
+  const token = getToken();
+  const item = cache.find(it=>it.id===id);
+  if(!item) return;
+  const liked = item.likes && item.likes[token];
+  btn.disabled = true;
+  try{
+    if(liked){
+      await fetch(`${DB}/${GALLERY_PATH}/${id}/likes/${token}.json`, {method:'DELETE'});
+      if(item.likes) delete item.likes[token];
+    } else {
+      await fetch(`${DB}/${GALLERY_PATH}/${id}/likes/${token}.json`, {method:'PUT', body:'true'});
+      item.likes = item.likes || {};
+      item.likes[token] = true;
+    }
+    render();
+  }catch(e){ console.error(e); }
+  finally{ btn.disabled = false; }
+}
+
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter;
+    render();
+  });
+});
+document.getElementById('sortsel').addEventListener('change', e=>{
+  currentSort = e.target.value; render();
+});
+
+function compressImage(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const maxW = 900;
+        const scale = Math.min(1, maxW/img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width*scale;
+        canvas.height = img.height*scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('submitForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '제출 중...';
+  const f = e.target;
+  try{
+    const payload = {
+      name: f.name.value.trim().slice(0,30),
+      school: f.school.value.trim().slice(0,30),
+      level: f.level.value,
+      title: f.title.value.trim().slice(0,60),
+      desc: f.desc.value.trim().slice(0,300),
+      link: f.link.value.trim(),
+      createdAt: Date.now()
+    };
+    const file = f.image.files[0];
+    if(file){
+      if(file.size > 8*1024*1024){ throw new Error('이미지가 너무 큽니다 (8MB 이하)'); }
+      payload.image = await compressImage(file);
+    }
+    await fetch(`${DB}/${GALLERY_PATH}.json`, {method:'POST', body: JSON.stringify(payload)});
+    f.reset();
+    await loadGallery();
+    toast('제출 완료! 갤러리에서 확인해보세요 🎉');
+  }catch(err){
+    toast('제출에 실패했어요: ' + err.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '🚀 제출하기';
+  }
+});
+
+loadGallery();
+setInterval(loadGallery, 5000);
+</script>
+</body>
+</html>
