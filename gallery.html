@@ -124,9 +124,6 @@
         <input type="file" name="htmlFile" accept=".html,text/html">
         <div class="hint">제미나이에서 다운로드한 .html 파일을 그대로 올리면, 갤러리에서 바로 열어볼 수 있어요. (최대 3MB)</div>
       </div>
-      <div class="field full" style="margin-top:-6px;">
-        <div class="hint" style="color:var(--brand-dark);font-weight:700;">⚠️ 제미나이 공유 링크 또는 HTML 파일 첨부, 둘 중 하나는 꼭 있어야 해요.</div>
-      </div>
       <div class="field full">
         <label>🚀 Apps Script 웹앱 링크 (고급 도전자만, 선택)</label>
         <input type="url" name="appsScriptLink" placeholder="https://script.google.com/macros/s/.../exec">
@@ -301,10 +298,6 @@ document.getElementById('submitForm').addEventListener('submit', async (e)=>{
 
   const linkVal = f.link.value.trim();
   const htmlFile = f.htmlFile.files[0];
-  if(!linkVal && !htmlFile){
-    toast('제미나이 공유 링크 또는 HTML 파일 중 하나는 꼭 첨부해주세요.', true);
-    return;
-  }
   if(htmlFile && htmlFile.size > 3*1024*1024){
     toast('HTML 파일이 너무 큽니다 (3MB 이하).', true);
     return;
