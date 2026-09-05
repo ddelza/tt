@@ -194,6 +194,11 @@ html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</but
         <div class="prompt-box">공공데이터포털의 기상청 단기예보 API를 fetch로 불러와서, 오늘부터 3일간 우리 지역 날씨(기온/강수확률)를 카드 형태로 보여주는 html을 만들어줘. API 주소는 [발급받은 엔드포인트], 인증키는 [발급받은 키]야. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
         <div class="prompt-box">NASA APOD API(https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘의 천문 사진과 설명을 보여주는 html을 만들어줘. 사진을 클릭하면 크게 볼 수 있었으면 좋겠어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
         <div class="prompt-box">GBIF API(https://api.gbif.org/v1/occurrence/search)를 fetch로 불러와서, 학명을 입력하면 그 생물의 실제 관측 기록을 지도 위에 점으로 표시하는 html을 만들어줘. 예시로 왜가리(Ardea cinerea)로 검색해줘. 좌표는 decimalLatitude/decimalLongitude 필드를 쓰고, 각 점을 클릭하면 관측 날짜와 사진(media 필드)이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">Open-Meteo API(https://api.open-meteo.com/v1/forecast)를 fetch로 불러와서, 위도/경도를 입력하면 그 지역의 현재 기온과 오늘의 최고/최저 기온을 보여주는 html을 만들어줘. 예시로 서울(위도 37.5, 경도 127.0)로 검색해줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">USGS 지진정보 API(https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson)를 fetch로 불러와서, 최근 일주일간 규모 5.0 이상 지진들을 지도 위에 점으로 표시하는 html을 만들어줘. 점 크기는 지진 규모(mag)에 비례하게 하고, 클릭하면 위치명(place)과 발생시각이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">ISS(국제우주정거장) 실시간 위치 API(https://api.wheretheiss.at/v1/satellites/25544)를 fetch로 불러와서, 세계지도 위에 ISS의 현재 위치를 표시하는 html을 만들어줘. 고도(altitude)와 속도(velocity), 낮/밤 여부(visibility)도 숫자로 보여주고, 5초마다 자동으로 새로고침해서 움직이는 것처럼 보이게 해줘. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">NASA 소행성 접근정보 API(https://api.nasa.gov/neo/rest/v1/feed?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘 하루 지구에 근접하는 소행성 목록을 카드 형태로 보여주는 html을 만들어줘. 각 카드에는 소행성 이름, 예상 크기, 지구와의 최근접 거리, 위험 여부(is_potentially_hazardous_asteroid)를 표시해줘. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">PubChem API(https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/)를 fetch로 불러와서, 화합물 이름(영어)을 입력하면 분자식, 분자량, IUPAC 명칭을 보여주는 html을 만들어줘. 예시로 caffeine을 검색해줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
       </li>
       <li>완성되면 초급과 똑같이 공유 버튼으로 링크를 받아 갤러리에 제출하세요.</li>
     </ol>
@@ -448,6 +453,31 @@ loadList();
         <div class="name">🐦 GBIF 생물 관측 기록</div>
         <a href="https://api.gbif.org/v1/occurrence/search" target="_blank" rel="noopener">api.gbif.org</a>
         <div class="note">전 세계 생물 관측 좌표·사진·멸종위기 등급까지 조회. 인증키 불필요. ⚠️ 한글 이름이 아니라 학명(라틴어)으로 검색해야 해요.</div>
+      </div>
+      <div class="api-card">
+        <div class="name">🌦️ Open-Meteo 날씨</div>
+        <a href="https://api.open-meteo.com/v1/forecast" target="_blank" rel="noopener">api.open-meteo.com</a>
+        <div class="note">위도/경도만 넣으면 바로 조회. 기상청 API처럼 격자좌표 변환이 필요 없어 가장 간단해요. 인증키 불필요.</div>
+      </div>
+      <div class="api-card">
+        <div class="name">🌋 USGS 실시간 지진정보</div>
+        <a href="https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&limit=1&minmagnitude=5" target="_blank" rel="noopener">earthquake.usgs.gov</a>
+        <div class="note">전 세계 지진 위치·규모·시각을 실시간 제공. 판구조론 수업에 바로 활용 가능. 인증키 불필요.</div>
+      </div>
+      <div class="api-card">
+        <div class="name">🛰️ ISS 실시간 위치</div>
+        <a href="https://api.wheretheiss.at/v1/satellites/25544" target="_blank" rel="noopener">api.wheretheiss.at</a>
+        <div class="note">국제우주정거장의 현재 위도·경도·고도·속도를 실시간 제공. 인증키 불필요. (open-notify.org는 HTTPS 미지원이라 이 API를 씁니다)</div>
+      </div>
+      <div class="api-card">
+        <div class="name">☄️ NASA 소행성 정보 (NeoWs)</div>
+        <a href="https://api.nasa.gov/neo/rest/v1/feed?api_key=DEMO_KEY" target="_blank" rel="noopener">api.nasa.gov/neo</a>
+        <div class="note">오늘/이번주 지구근접 소행성의 크기·거리·위험도 제공. DEMO_KEY로 바로 사용 가능.</div>
+      </div>
+      <div class="api-card">
+        <div class="name">🧪 PubChem 화합물 조회</div>
+        <a href="https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/water/property/MolecularFormula/JSON" target="_blank" rel="noopener">pubchem.ncbi.nlm.nih.gov</a>
+        <div class="note">화합물 영어 이름으로 분자식·분자량·IUPAC 명칭 조회. 화학 수업에 활용. 인증키 불필요.</div>
       </div>
     </div>
 
