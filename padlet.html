@@ -193,6 +193,7 @@ html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</but
       <li>바로 써볼 수 있는 예시 두 가지:
         <div class="prompt-box">공공데이터포털의 기상청 단기예보 API를 fetch로 불러와서, 오늘부터 3일간 우리 지역 날씨(기온/강수확률)를 카드 형태로 보여주는 html을 만들어줘. API 주소는 [발급받은 엔드포인트], 인증키는 [발급받은 키]야. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
         <div class="prompt-box">NASA APOD API(https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘의 천문 사진과 설명을 보여주는 html을 만들어줘. 사진을 클릭하면 크게 볼 수 있었으면 좋겠어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box">GBIF API(https://api.gbif.org/v1/occurrence/search)를 fetch로 불러와서, 학명을 입력하면 그 생물의 실제 관측 기록을 지도 위에 점으로 표시하는 html을 만들어줘. 예시로 왜가리(Ardea cinerea)로 검색해줘. 좌표는 decimalLatitude/decimalLongitude 필드를 쓰고, 각 점을 클릭하면 관측 날짜와 사진(media 필드)이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
       </li>
       <li>완성되면 초급과 똑같이 공유 버튼으로 링크를 받아 갤러리에 제출하세요.</li>
     </ol>
@@ -442,6 +443,11 @@ loadList();
         <a href="https://dog.ceo/dog-api/" target="_blank" rel="noopener">dog.ceo</a> ·
         <a href="https://thecatapi.com" target="_blank" rel="noopener">TheCatAPI</a>
         <div class="note">API 연동 연습 자체를 처음 해볼 때 가장 간단해요.</div>
+      </div>
+      <div class="api-card">
+        <div class="name">🐦 GBIF 생물 관측 기록</div>
+        <a href="https://api.gbif.org/v1/occurrence/search" target="_blank" rel="noopener">api.gbif.org</a>
+        <div class="note">전 세계 생물 관측 좌표·사진·멸종위기 등급까지 조회. 인증키 불필요. ⚠️ 한글 이름이 아니라 학명(라틴어)으로 검색해야 해요.</div>
       </div>
     </div>
 
