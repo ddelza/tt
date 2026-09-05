@@ -10,6 +10,7 @@
     --brand:#6d4aff; --brand-dark:#5334e0; --line:#e7e4f5;
     --gemini:#1a73e8; --gemini-bg:#e8f0fe;
     --apps:#188038; --apps-bg:#e6f4ea;
+    --file:#c98a1a; --file-bg:#fdf1dc;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -66,6 +67,7 @@
   .gcard .link-btn{text-decoration:none;font-size:12px;font-weight:700;padding:7px 10px;border-radius:8px;}
   .gcard .link-btn.gemini{background:var(--gemini-bg);color:var(--gemini);}
   .gcard .link-btn.apps{background:var(--apps-bg);color:var(--apps);}
+  .gcard .link-btn.file{background:var(--file-bg);color:var(--file);}
   .gcard .row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
   .like-btn{border:none;background:#fff0f3;color:#e0416a;border-radius:999px;padding:6px 12px;
     font-size:12.5px;font-weight:800;cursor:pointer;}
@@ -113,9 +115,17 @@
         <textarea name="desc" maxlength="300" placeholder="어떤 걸 만들었는지, 어떤 수업에 쓸 수 있는지 적어주세요"></textarea>
       </div>
       <div class="field full">
-        <label>✨ 제미나이 공유 링크 (필수)</label>
-        <input type="url" name="link" required placeholder="https://gemini.google.com/share/...">
+        <label>✨ 제미나이 공유 링크</label>
+        <input type="url" name="link" placeholder="https://gemini.google.com/share/...">
         <div class="hint">제미나이 화면 위쪽 공유 버튼으로 만든 링크를 붙여넣어주세요.</div>
+      </div>
+      <div class="field full">
+        <label>📎 HTML 파일 첨부</label>
+        <input type="file" name="htmlFile" accept=".html,text/html">
+        <div class="hint">제미나이에서 다운로드한 .html 파일을 그대로 올리면, 갤러리에서 바로 열어볼 수 있어요. (최대 3MB)</div>
+      </div>
+      <div class="field full" style="margin-top:-6px;">
+        <div class="hint" style="color:var(--brand-dark);font-weight:700;">⚠️ 제미나이 공유 링크 또는 HTML 파일 첨부, 둘 중 하나는 꼭 있어야 해요.</div>
       </div>
       <div class="field full">
         <label>🚀 Apps Script 웹앱 링크 (고급 도전자만, 선택)</label>
@@ -147,6 +157,7 @@
 <script>
 const DB = "https://gwangsu-on-default-rtdb.firebaseio.com";
 const GALLERY_PATH = "years/2026/workshopTT/gallery";
+const FILES_PATH = "years/2026/workshopTT/galleryFiles";
 
 let toastTimer;
 function toast(msg, isErr){
@@ -215,6 +226,7 @@ function render(){
         <div class="who">${esc(it.name)}${it.school ? ' · '+esc(it.school) : ''}</div>
         <div class="links">
           ${it.link ? `<a class="link-btn gemini" href="${escAttr(it.link)}" target="_blank" rel="noopener">✨ 제미나이 링크</a>` : ''}
+          ${it.hasFile ? `<a class="link-btn file" href="view.html?id=${encodeURIComponent(it.id)}" target="_blank" rel="noopener">📎 첨부파일 보기</a>` : ''}
           ${it.appsScriptLink ? `<a class="link-btn apps" href="${escAttr(it.appsScriptLink)}" target="_blank" rel="noopener">🚀 Apps Script 링크</a>` : ''}
         </div>
         <div class="row">
@@ -273,28 +285,55 @@ function compressImage(file){
   });
 }
 
+function readTextFile(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
 document.getElementById('submitForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const btn = document.getElementById('submitBtn');
+  const f = e.target;
+
+  const linkVal = f.link.value.trim();
+  const htmlFile = f.htmlFile.files[0];
+  if(!linkVal && !htmlFile){
+    toast('제미나이 공유 링크 또는 HTML 파일 중 하나는 꼭 첨부해주세요.', true);
+    return;
+  }
+  if(htmlFile && htmlFile.size > 3*1024*1024){
+    toast('HTML 파일이 너무 큽니다 (3MB 이하).', true);
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = '제출 중...';
-  const f = e.target;
   try{
     const payload = {
       name: f.name.value.trim().slice(0,30),
       school: f.school.value.trim().slice(0,30),
       title: f.title.value.trim().slice(0,60),
       desc: f.desc.value.trim().slice(0,300),
-      link: f.link.value.trim(),
+      link: linkVal,
       appsScriptLink: f.appsScriptLink.value.trim(),
+      hasFile: !!htmlFile,
       createdAt: Date.now()
     };
-    const file = f.image.files[0];
-    if(file){
-      if(file.size > 8*1024*1024){ throw new Error('이미지가 너무 큽니다 (8MB 이하)'); }
-      payload.image = await compressImage(file);
+    const image = f.image.files[0];
+    if(image){
+      if(image.size > 8*1024*1024){ throw new Error('이미지가 너무 큽니다 (8MB 이하)'); }
+      payload.image = await compressImage(image);
     }
-    await fetch(`${DB}/${GALLERY_PATH}.json`, {method:'POST', body: JSON.stringify(payload)});
+    const res = await fetch(`${DB}/${GALLERY_PATH}.json`, {method:'POST', body: JSON.stringify(payload)});
+    const { name: newId } = await res.json();
+    if(htmlFile){
+      const htmlText = await readTextFile(htmlFile);
+      await fetch(`${DB}/${FILES_PATH}/${newId}.json`, {method:'PUT', body: JSON.stringify({html: htmlText})});
+    }
     f.reset();
     await loadGallery();
     toast('제출 완료! 갤러리에서 확인해보세요 🎉');
