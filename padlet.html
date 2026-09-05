@@ -12,6 +12,7 @@
     --inter:#1a73e8; --inter-bg:#e8f0fe;
     --advanced:#a83fd1; --advanced-bg:#f6e6fb;
     --extra:#c98a1a; --extra-bg:#fdf1dc;
+    --tipc:#0f9488; --tipc-bg:#e3f7f4;
     --good:#22a06b; --good-bg:#e6f7ef;
     --warn:#c98a1a; --warn-bg:#fdf1dc;
     --bad:#c0304a; --bad-bg:#fbe7ea;
@@ -41,6 +42,16 @@
   .tab.active[data-level="inter"]{background:var(--inter-bg);border-color:var(--inter);color:var(--inter);}
   .tab.active[data-level="advanced"]{background:var(--advanced-bg);border-color:var(--advanced);color:var(--advanced);}
   .tab.active[data-level="extra"]{background:var(--extra-bg);border-color:var(--extra);color:var(--extra);}
+  .tab.active[data-level="tip"]{background:var(--tipc-bg);border-color:var(--tipc);color:var(--tipc);}
+
+  .tip-entry{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;background:#fff;}
+  .tip-entry summary{padding:14px 16px;font-weight:800;font-size:14.5px;cursor:pointer;list-style:none;
+    display:flex;align-items:center;gap:9px;}
+  .tip-entry summary::-webkit-details-marker{display:none;}
+  .tip-entry summary::before{content:"▶";font-size:11px;color:var(--tipc);flex-shrink:0;}
+  .tip-entry[open] summary::before{content:"▼";}
+  .tip-entry .tip-body{padding:0 16px 18px;font-size:13.8px;}
+  .tip-entry .tip-sub{color:var(--sub);font-size:12.8px;margin:-4px 0 12px;}
 
   .panel{display:none;background:var(--card);border-radius:18px;padding:24px 22px;
     box-shadow:0 4px 20px rgba(80,60,180,.07);border:1px solid var(--line);}
@@ -141,6 +152,7 @@
     <div class="tab active" data-level="beginner">🌱 초급<br><small style="font-weight:500">제미나이로 시뮬레이션</small></div>
     <div class="tab" data-level="inter">🔌 중급<br><small style="font-weight:500">API로 실제 데이터</small></div>
     <div class="tab" data-level="advanced">🚀 고급<br><small style="font-weight:500">Apps Script 배포</small></div>
+    <div class="tab" data-level="tip">💡 팁공유<br><small style="font-weight:500">수시 업데이트</small></div>
     <div class="tab" data-level="extra">📎 보조자료<br><small style="font-weight:500">팁 · API 모음</small></div>
   </div>
 
@@ -382,6 +394,79 @@ loadList();
 수정된 코드 전체를 다시 통째로 줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
 
     <p class="lead" style="margin-top:16px;">완성한 배포 URL은 갤러리 제출 시 <b>"Apps Script 웹앱 링크"</b>란에 추가로 남겨주세요.</p>
+  </div>
+
+  <!-- 팁공유 -->
+  <div class="panel" id="panel-tip">
+    <h2>💡 팁공유</h2>
+    <p class="lead">진행하면서 생기는 실전 노하우를 하나씩 여기에 쌓아갑니다. 제목을 눌러서 펼쳐보세요.</p>
+
+    <details class="tip-entry" open>
+      <summary>💬 이 페이지, 어떻게 따라가야 할지 막막하다면?</summary>
+      <div class="tip-body">
+        <p class="tip-sub">그것조차 AI한테 물어보면 어떨까요?</p>
+        <p class="lead" style="margin-bottom:10px;">이 안내들을 읽으면서 혼자 따라가기 어렵다고 느껴진다면, 방법은 간단합니다 — 그 내용을 그대로 복사해서 AI 챗봇에게 붙여넣고 "이거 하나씩 따라할 수 있게 도와줘"라고 부탁하면 됩니다.</p>
+        <p class="lead" style="margin-bottom:0;">진행하다가 오류 메시지가 뜨거나, 안내에서 말하는 메뉴·버튼이 화면에 안 보이거나, 뭘 해야 할지 막히면? <b>그 화면을 그대로 캡처해서 AI에게 보여주고 물어보세요.</b> 대부분의 경우 화면 캡처 한 장만으로 AI가 원인을 찾아줍니다. "AI 활용법을 배우는 것"조차 AI에게 물어보면서 배울 수 있다는 것 — 그게 오늘 이 워크숍의 핵심입니다.</p>
+      </div>
+    </details>
+
+    <details class="tip-entry">
+      <summary>🔑 학생 제출 페이지에 구글 계정 로그인으로 본인 확인 붙이기</summary>
+      <div class="tip-body">
+        <p class="tip-sub">학번+이름을 손으로 입력하는 대신, 실제 로그인된 학교 구글 계정으로 본인을 확인하고 싶을 때</p>
+
+        <p class="lead">학교에서 관리하는 크롬북은 보안 정책으로 제3자 쿠키를 막아두는 경우가 많아서, Apps Script 자체 로그인 확인 기능은 크롬북에서 "확인 중..."에 멈춘 채 먹통이 되기 쉽습니다. 대신 구글이 제공하는 <b>로그인 버튼(Google Identity Services)</b>을 화면에 띄우고, 학생이 그 버튼을 누르면 구글이 서명한 토큰을 서버(Apps Script)로 보내 구글 서버에 직접 검증을 맡기는 방식이 훨씬 안정적입니다.</p>
+
+        <p class="lead"><b>준비물</b>: 이미 동작 중인 구글 스프레드시트+Apps Script 학생 제출 페이지, 그리고 학생 명단 시트에 "학번/이름/구글계정(이메일)" 열.</p>
+
+        <p class="lead">아래 지침서를 통째로 복사해서 제미나이(또는 다른 AI 챗봇)에게 새 대화로 붙여넣으면, AI가 한 단계씩 안내해줍니다.</p>
+
+        <details>
+          <summary style="color:var(--tipc);">📋 지침서 펼쳐서 복사하기 ▼</summary>
+          <div class="prompt-box">너는 지금부터 코딩을 전혀 모르는 선생님이, 이미 만들어져 있는 학생 제출 페이지(구글 스프레드시트 + Apps Script 구조)에 "구글 계정으로 로그인해서 본인 확인하기" 기능을 추가하는 걸 도와주는 조수야. 아래 내용을 반드시 지켜서 진행해줘.
+
+[먼저 확인할 것]
+1. 지금 학생 제출 페이지가 이미 구글 스프레드시트 + Apps Script + (GitHub Pages 또는 Apps Script 자체 URL) 구조로 동작하고 있는지 나한테 확인해줘. 아직 없다면 그것부터 먼저 만들어야 한다고 안내하고, 이 작업은 그다음에 진행하자고 해줘.
+2. 학생 명단 스프레드시트에 "학번", "이름", "구글계정(이메일)" 열이 있는지 확인해줘. 없다면 그 열부터 채워야 한다고 안내해줘.
+
+[왜 이 방식을 쓰는지 — 필요하면 나한테 설명해줘]
+학교에서 관리하는 크롬북은 보안 정책으로 제3자 쿠키를 차단하는 경우가 많아서, Apps Script 자체의 로그인 확인 방식(Session.getActiveUser)은 크롬북에서 자주 먹통이 된다. 대신 구글 로그인 버튼(Google Identity Services)을 화면에 띄우고, 학생이 그 버튼을 눌러 로그인하면 구글이 서명한 토큰을 발급해준다. 그 토큰을 서버(Apps Script)로 보내 구글 서버에 직접 검증을 맡기면, 크롬북 쿠키 문제와 무관하게 항상 안정적으로 동작한다.
+
+[작업 순서 — 한 단계씩만 안내하고, 내가 완료를 확인해주면 다음으로 넘어가]
+
+1) 구글 클라우드 콘솔에서 OAuth 클라이언트 ID 만들기
+   - console.cloud.google.com/apis/credentials 로 접속하라고 안내해줘.
+   - "사용자 인증 정보 만들기" → "OAuth 클라이언트 ID" → 애플리케이션 유형: "웹 애플리케이션" 선택하는 법을 안내해줘.
+   - "승인된 자바스크립트 원본"에 지금 학생들이 접속하는 실제 주소(예: https://내아이디.github.io)를 추가하라고 안내해줘.
+   - 만들어진 "클라이언트 ID" 값을 나한테 알려달라고 요청해줘.
+
+2) 화면(HTML)에 구글 로그인 버튼 추가
+   - &lt;script src="https://accounts.google.com/gsi/client" async defer&gt;&lt;/script&gt; 를 추가하는 코드를 줘.
+   - google.accounts.id.initialize({client_id: 내 클라이언트ID, callback: 콜백함수})와 google.accounts.id.renderButton(...)으로 로그인 버튼을 렌더링하는 코드를 줘.
+   - 콜백 함수 안에서 response.credential(토큰)을 받아, 기존에 학번+이름을 직접 입력받던 자리를 대신해서 이 토큰을 서버로 보내는 코드로 짜줘.
+
+3) 서버(Code.gs)에서 토큰 검증
+   - 받은 토큰을 UrlFetchApp.fetch로 https://oauth2.googleapis.com/tokeninfo?id_token=토큰값 에 그대로 던져서 검증하는 코드를 줘.
+   - 응답의 aud 값이 내 클라이언트ID와 같은지 반드시 확인해야 한다고 코드에 넣어줘 (다르면 가짜 토큰이니 거부).
+   - 응답의 email 값을 학생 명단 시트의 "구글계정" 열과 대소문자를 무시하고(둘 다 소문자로 바꿔서) 비교해서, 일치하는 행의 학번/이름을 찾아 본인 확인 처리하는 코드를 줘.
+   - 이 코드를 배포한 뒤, UrlFetchApp.fetch를 쓰는 함수를 Apps Script 에디터에서 직접 한 번 실행해서 "액세스 승인" 팝업을 끝까지 진행해야 한다고 반드시 안내해줘. 이 승인을 하지 않으면 실제 배포된 웹앱에서 권한 오류가 난다는 것도 알려줘.
+
+4) 재배포 및 테스트
+   - [배포 → 배포 관리 → 연필 아이콘 → 버전: 새 버전]으로 재배포하라고 안내해줘.
+   - 실제로 로그인 버튼을 눌러서 본인 확인이 정상적으로 되는지 테스트해보라고 안내해줘.
+
+[막히면 확인할 것 — 내가 아래 증상을 말하면 바로 원인을 알려줘]
+- 로그인 버튼을 눌러도 반응이 없다 → "승인된 자바스크립트 원본"에 지금 접속 중인 주소가 정확히(오타 없이, https까지) 등록됐는지 확인
+- 서버에서 계속 권한 오류가 난다 → 3번의 "액세스 승인" 팝업을 끝까지 진행했는지 확인
+- 로그인은 되는데 본인 확인이 안 된다 → 이메일 대소문자 차이일 수 있으니 비교 전에 양쪽 다 소문자로 맞췄는지 코드를 확인
+- 학교 크롬북에서 자꾸 멈춘다 → 이 방식(구글 로그인 버튼) 대신 예전 방식(Session.getActiveUser)이 남아있는 건 아닌지 확인
+
+자, 이제 나한테 지금 학생 제출 페이지가 어떤 구조로 되어 있는지부터 물어보는 것부터 시작해줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        </details>
+
+        <div class="tip"><b>💡 팁</b> 이 방식은 GitHub Pages + Apps Script 조합(고급 탭)이 이미 동작하고 있다는 걸 전제로 합니다. 아직 제출 페이지 자체를 안 만들었다면, 고급 탭부터 먼저 완성한 뒤 이 기능을 추가하세요.</div>
+      </div>
+    </details>
   </div>
 
   <!-- 보조자료 -->
