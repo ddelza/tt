@@ -17,7 +17,7 @@
     font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
     line-height:1.6;}
   a{color:inherit;}
-  header.hero{background:linear-gradient(135deg,#6d4aff,#9b7bff);color:#fff;
+  header.hero{position:relative;background:linear-gradient(135deg,#6d4aff,#9b7bff);color:#fff;
     padding:32px 20px 24px;text-align:center;}
   header.hero h1{margin:0 0 6px;font-size:24px;}
   header.hero p{margin:2px 0;opacity:.95;font-size:14px;}
@@ -25,6 +25,9 @@
   .navbtns a{background:#ffffff;color:var(--brand-dark);text-decoration:none;
     padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px;
     box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .visitor-badge{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.18);
+    color:#fff;padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;
+    backdrop-filter:blur(4px);white-space:nowrap;}
 
   main{max-width:1100px;margin:0 auto;padding:24px 16px 60px;}
 
@@ -87,6 +90,7 @@
 <body>
 
 <header class="hero">
+  <div class="visitor-badge">👀 오늘 <span id="visitorCount">-</span>명 방문</div>
   <h1>🖼️ 작품 갤러리</h1>
   <p>오늘 만든 결과물을 자랑해주세요! 다른 팀 작품도 구경하고 좋아요를 눌러보세요.</p>
   <div class="navbtns">
@@ -155,6 +159,24 @@
 const DB = "https://gwangsu-on-default-rtdb.firebaseio.com";
 const GALLERY_PATH = "years/2026/workshopTT/gallery";
 const FILES_PATH = "years/2026/workshopTT/galleryFiles";
+const VISITOR_PATH = "years/2026/workshopTT/visitors";
+
+function todayKST(){
+  const kst = new Date(Date.now() + 9*60*60*1000);
+  return kst.toISOString().slice(0,10);
+}
+async function trackVisitor(){
+  const el = document.getElementById('visitorCount');
+  if(!el) return;
+  try{
+    const today = todayKST();
+    const token = getToken();
+    await fetch(`${DB}/${VISITOR_PATH}/${today}/${token}.json`, {method:'PUT', body:'true'});
+    const res = await fetch(`${DB}/${VISITOR_PATH}/${today}.json?shallow=true`);
+    const data = await res.json();
+    el.textContent = data ? Object.keys(data).length : 1;
+  }catch(e){ console.error(e); }
+}
 
 let toastTimer;
 function toast(msg, isErr){
@@ -338,6 +360,7 @@ document.getElementById('submitForm').addEventListener('submit', async (e)=>{
   }
 });
 
+trackVisitor();
 loadGallery();
 setInterval(loadGallery, 5000);
 </script>
