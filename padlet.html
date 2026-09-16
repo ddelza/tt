@@ -750,6 +750,27 @@ Apps Script는 코드를 고칠 때마다 script.google.com 편집기에 복사�
         <p class="lead">Claude Code 같은 에이전트를 쓰고 있다면 이 조합의 장점이 확실히 드러납니다. Apps Script는 배포 여부를 에이전트가 직접 확인할 방법이 마땅치 않아서, 코드를 고칠 때마다 결국 사람이 "복사해서 붙여넣고 새 버전으로 배포했어요"라고 확인해줘야 다음 단계로 넘어갈 수 있었습니다. Firebase는 REST 주소로 바로 데이터를 읽고 쓰고 지울 수 있어서, 에이전트가 터미널에서 직접 확인하고 정리까지 마친 뒤 결과만 보고합니다. 그리고 화면 코드를 고친 뒤에는 git push 한 번이면 GitHub Pages에도, Firebase 연결에도 동시에 반영되니 — "복사해서 어디에 붙여넣어야 하지"라는 그 한 단계가 통째로 사라집니다.</p>
       </div>
     </details>
+
+    <details class="tip-entry">
+      <summary>🆚 Firebase vs Supabase — 둘 다 데이터 저장하는 곳인데 뭐가 다를까?</summary>
+      <div class="tip-body">
+        <p class="tip-sub">맞습니다 — 둘 다 "백엔드"입니다. 서버를 직접 사서 켜두지 않아도 회사가 대신 서버를 운영해주면서, 데이터를 저장·조회해주는 서비스라는 점은 같습니다.</p>
+
+        <p class="lead">다른 점은 데이터를 담아두는 "모양"과, 그게 지금 이 워크숍 방식(GitHub Pages + AI)과 얼마나 잘 맞는지입니다.</p>
+
+        <div class="tbl-wrap"><table class="cmp-table">
+          <tr><th>항목</th><th>Firebase (RTDB)</th><th>Supabase</th></tr>
+          <tr><td>데이터 모양</td><td>트리형 JSON — 폴더처럼 계속 안으로 들어가는 구조</td><td>표(테이블) — 엑셀·구글시트처럼 행·열</td></tr>
+          <tr><td>화면 코드와 연결</td><td>SDK 없이 주소 뒤에 .json만 붙여서 REST로 바로 읽고 쓰기 가능</td><td>보통 클라이언트 라이브러리 설치 + RLS(행 단위 보안 규칙) 설정이 필요</td></tr>
+          <tr><td>무료 플랜 운영</td><td>비활성 상태로 인해 절대 멈추지 않음</td><td>7일간 요청 없으면 프로젝트가 자동으로 일시정지</td></tr>
+          <tr><td>비개발자가 배우기</td><td>"그냥 큰 JSON 파일"이라는 설명 한 줄로 끝 — 진입장벽이 낮음</td><td>표 화면 자체는 친숙하지만, RLS 개념은 확실히 어려움</td></tr>
+        </table></div>
+
+        <p class="lead">지금처럼 "GitHub Pages + AI로 빠르게 만들고 배포"하는 흐름엔 Firebase가 더 잘 맞습니다. 다만 방학처럼 오래 안 쓰는 앱을 Supabase로 만든다면, 무료 플랜이 7일 뒤 자동으로 멈춘다는 점을 꼭 기억해두세요.</p>
+
+        <div class="tip"><b>💡 팁</b> 용어위키 탭의 "GAS(Google Apps Script)", "Firebase", "Supabase" 항목에서 각 용어를 하나씩 다시 찾아볼 수 있습니다.</div>
+      </div>
+    </details>
   </div>
 
   <!-- 코딩용어 위키 -->
