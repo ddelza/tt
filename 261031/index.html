@@ -154,6 +154,8 @@ function renderHub() {
 function enterAct(act) {
   $('actTitle').textContent = `${act.no}. ${act.title}`;
   $('actDesc').textContent = act.desc;
+  if (act.link) $('actDesc').insertAdjacentHTML('beforeend',
+    `<br><a class="btn pri" style="margin-top:12px;display:inline-block;text-decoration:none" href="${esc(act.link.href)}" target="_blank" rel="noopener">${esc(act.link.label)} ↗</a>`);
   $('actForm').innerHTML = ''; $('actTabs').innerHTML = ''; $('actBody').innerHTML = '';
   if (act.type === 'submit') buildForm(act);
   window.scrollTo(0, 0);
@@ -270,7 +272,7 @@ function subCard(act, s, extra) {
   const g = groupById(s.group) || {};
   const link = safeUrl(s.link);
   const body = act.fields.filter(f => !['title', 'link'].includes(f.k) && s[f.k]).map(f =>
-    f.k === 'prompt' ? `<details><summary>💬 ${esc(f.label)} 보기</summary><div class="f">${esc(s[f.k])}</div></details>`
+    ['prompt', 'result'].includes(f.k) ?`<details><summary>💬 ${esc(f.label)} 보기</summary><div class="f">${esc(s[f.k])}</div></details>`
                      : `<div class="f"><b>${esc(f.label)}</b>${esc(s[f.k])}</div>`).join('');
   const n = likeCount(act.id, s.uid);
   return `<div class="sub" style="--gc:${g.c || '#cfd4dc'}">
@@ -312,7 +314,7 @@ function renderVote() {
   for (const [voter, v] of Object.entries(votes)) if (v.group === gid) tally[v.key] = (tally[v.key] || 0) + 1;
   const max = Math.max(0, ...Object.values(tally));
   let html = '';
-  for (const act of ACTS.filter(a => a.type === 'submit' && a.id !== 'plan')) {
+  for (const act of ACTS.filter(a => a.type === 'submit' && a.id !== 'plan' && !a.noVote)) {
     const list = listSubs(act.id).filter(s => s.group === gid);
     if (!list.length) continue;
     html += `<h3 style="margin:22px 0 0">${esc(act.title)}</h3><div class="subs">` + list.map(s => {
