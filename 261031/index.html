@@ -154,8 +154,8 @@ function renderHub() {
 function enterAct(act) {
   $('actTitle').textContent = `${act.no}. ${act.title}`;
   $('actDesc').textContent = act.desc;
-  if (act.link) $('actDesc').insertAdjacentHTML('beforeend',
-    `<br><a class="btn pri" style="margin-top:12px;display:inline-block;text-decoration:none" href="${esc(act.link.href)}" target="_blank" rel="noopener">${esc(act.link.label)} ↗</a>`);
+  if (act.links) $('actDesc').insertAdjacentHTML('beforeend', '<br>' + act.links.map(l =>
+    `<a class="btn pri" style="margin:12px 8px 0 0;display:inline-block;text-decoration:none" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join(''));
   $('actForm').innerHTML = ''; $('actTabs').innerHTML = ''; $('actBody').innerHTML = '';
   if (act.type === 'submit') buildForm(act);
   window.scrollTo(0, 0);
