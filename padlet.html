@@ -85,6 +85,11 @@
     border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:700;}
   .prompt-box .copy:hover{background:var(--brand-dark);}
   .prompt-box .copy.copied{background:var(--beginner);}
+  .prompt-box.api-ok{border-color:#22a06b;background:#e6f7ef;}
+  .prompt-box.api-ng{border-color:#c0304a;background:#fbe7ea;}
+  .api-tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;}
+  .api-tag.ok{background:#e6f7ef;color:#22a06b;} .api-tag.ng{background:#fbe7ea;color:#c0304a;}
+  .api-note{color:#c0304a;font-size:13px;margin:6px 0;}
 
   .tip{background:#fff8e1;border-left:4px solid #f0b429;border-radius:8px;
     padding:10px 14px;margin:16px 0;font-size:13.8px;}
@@ -254,15 +259,18 @@ API 주소(엔드포인트)는 [API 문서 링크]이고, 필요한 인증키는
 가져온 데이터로 하고 싶은 것: [예: 오늘부터 3일간 우리 지역 날씨를 카드 형태로 보여줘]
 html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
       </li>
-      <li>바로 써볼 수 있는 예시 두 가지:
-        <div class="prompt-box">공공데이터포털의 기상청 단기예보 API를 fetch로 불러와서, 오늘부터 3일간 우리 지역 날씨(기온/강수확률)를 카드 형태로 보여주는 html을 만들어줘. API 주소는 [발급받은 엔드포인트], 인증키는 [발급받은 키]야. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">NASA APOD API(https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘의 천문 사진과 설명을 보여주는 html을 만들어줘. 사진을 클릭하면 크게 볼 수 있었으면 좋겠어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">GBIF API(https://api.gbif.org/v1/occurrence/search)를 fetch로 불러와서, 학명을 입력하면 그 생물의 실제 관측 기록을 지도 위에 점으로 표시하는 html을 만들어줘. 예시로 왜가리(Ardea cinerea)로 검색해줘. 좌표는 decimalLatitude/decimalLongitude 필드를 쓰고, 각 점을 클릭하면 관측 날짜와 사진(media 필드)이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">Open-Meteo API(https://api.open-meteo.com/v1/forecast)를 fetch로 불러와서, 위도/경도를 입력하면 그 지역의 현재 기온과 오늘의 최고/최저 기온을 보여주는 html을 만들어줘. 예시로 서울(위도 37.5, 경도 127.0)로 검색해줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">USGS 지진정보 API(https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson)를 fetch로 불러와서, 최근 일주일간 규모 5.0 이상 지진들을 지도 위에 점으로 표시하는 html을 만들어줘. 점 크기는 지진 규모(mag)에 비례하게 하고, 클릭하면 위치명(place)과 발생시각이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">ISS(국제우주정거장) 실시간 위치 API(https://api.wheretheiss.at/v1/satellites/25544)를 fetch로 불러와서, 세계지도 위에 ISS의 현재 위치를 표시하는 html을 만들어줘. 고도(altitude)와 속도(velocity), 낮/밤 여부(visibility)도 숫자로 보여주고, 5초마다 자동으로 새로고침해서 움직이는 것처럼 보이게 해줘. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">NASA 소행성 접근정보 API(https://api.nasa.gov/neo/rest/v1/feed?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘 하루 지구에 근접하는 소행성 목록을 카드 형태로 보여주는 html을 만들어줘. 각 카드에는 소행성 이름, 예상 크기, 지구와의 최근접 거리, 위험 여부(is_potentially_hazardous_asteroid)를 표시해줘. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
-        <div class="prompt-box">PubChem API(https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/)를 fetch로 불러와서, 화합물 이름(영어)을 입력하면 분자식, 분자량, IUPAC 명칭을 보여주는 html을 만들어줘. 예시로 caffeine을 검색해줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+      <li>바로 써볼 수 있는 예시 두 가지 <span class="api-tag ok">✅ 실제로 작동</span>
+        <div class="prompt-box api-ok">Open-Meteo API(https://api.open-meteo.com/v1/forecast)를 fetch로 불러와서, 위도/경도를 입력하면 그 지역의 현재 기온과 오늘의 최고/최저 기온을 보여주는 html을 만들어줘. 예시로 서울(위도 37.5, 경도 127.0)로 검색해줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box api-ok">PubChem API(https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/)를 fetch로 불러와서, 화합물 이름(영어)을 입력하면 분자식, 분자량, IUPAC 명칭을 보여주는 html을 만들어줘. 예시로 caffeine을 검색해줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+      </li>
+      <li>다양한 API 활용 예시 <span class="api-tag ng">⚠️ 작성 예시</span>
+        <p class="api-note">작성 예시입니다. 실제 API를 넣은 것이 아니어서 작동하지는 않습니다. 프롬프트를 어떻게 구성하는지 참고용으로만 보세요.</p>
+        <div class="prompt-box api-ng">공공데이터포털의 기상청 단기예보 API를 fetch로 불러와서, 오늘부터 3일간 우리 지역 날씨(기온/강수확률)를 카드 형태로 보여주는 html을 만들어줘. API 주소는 [발급받은 엔드포인트], 인증키는 [발급받은 키]야. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box api-ng">NASA APOD API(https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘의 천문 사진과 설명을 보여주는 html을 만들어줘. 사진을 클릭하면 크게 볼 수 있었으면 좋겠어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box api-ng">GBIF API(https://api.gbif.org/v1/occurrence/search)를 fetch로 불러와서, 학명을 입력하면 그 생물의 실제 관측 기록을 지도 위에 점으로 표시하는 html을 만들어줘. 예시로 왜가리(Ardea cinerea)로 검색해줘. 좌표는 decimalLatitude/decimalLongitude 필드를 쓰고, 각 점을 클릭하면 관측 날짜와 사진(media 필드)이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box api-ng">USGS 지진정보 API(https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson)를 fetch로 불러와서, 최근 일주일간 규모 5.0 이상 지진들을 지도 위에 점으로 표시하는 html을 만들어줘. 점 크기는 지진 규모(mag)에 비례하게 하고, 클릭하면 위치명(place)과 발생시각이 보였으면 좋겠어. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box api-ng">ISS(국제우주정거장) 실시간 위치 API(https://api.wheretheiss.at/v1/satellites/25544)를 fetch로 불러와서, 세계지도 위에 ISS의 현재 위치를 표시하는 html을 만들어줘. 고도(altitude)와 속도(velocity), 낮/밤 여부(visibility)도 숫자로 보여주고, 5초마다 자동으로 새로고침해서 움직이는 것처럼 보이게 해줘. 지도는 Leaflet 라이브러리를 CDN으로 불러와서 써줘. 인증키는 필요 없어. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
+        <div class="prompt-box api-ng">NASA 소행성 접근정보 API(https://api.nasa.gov/neo/rest/v1/feed?api_key=DEMO_KEY)를 fetch로 불러와서, 오늘 하루 지구에 근접하는 소행성 목록을 카드 형태로 보여주는 html을 만들어줘. 각 카드에는 소행성 이름, 예상 크기, 지구와의 최근접 거리, 위험 여부(is_potentially_hazardous_asteroid)를 표시해줘. html로 만들어줘.<button class="copy" onclick="copyPrompt(this)">복사</button></div>
       </li>
       <li>완성되면 초급과 똑같이 공유 버튼으로 링크를 받아 갤러리에 제출하세요.</li>
     </ol>
