@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>바이브코딩 실습실 · 2026.10.31</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="common.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <h1>🧪 바이브코딩 실습실 <small>에듀테크를 활용한 과학 수업 · 2026. 10. 31.</small></h1>
+  <div class="me hidden" id="meBox"><span id="meGroup"></span><b id="meName"></b><button class="btn sm ghost" id="logoutBtn">나가기</button></div>
+</div></header>
+
+<main class="wrap">
+  <!-- 로그인 -->
+  <section id="loginView" class="hidden">
+    <div class="card login">
+      <h2 style="margin-top:4px">반갑습니다 👋</h2>
+      <p class="lead">이름이나 별명을 입력하면 바로 들어갑니다.<br>오늘 활동은 모두 이 이름으로 저장돼요.</p>
+      <input id="nameInput" maxlength="12" placeholder="이름 또는 별명" autocomplete="off">
+      <button class="btn pri" id="loginBtn" style="width:100%;padding:12px;font-size:16px">들어가기</button>
+      <p class="msg" id="loginMsg"></p>
+    </div>
+  </section>
+
+  <!-- 활동 목록 -->
+  <section id="hubView" class="hidden">
+    <h2>오늘의 활동</h2>
+    <p class="lead">선생님이 열어 둔 활동만 참여할 수 있어요. 학생용 수행평가 사이트와 같은 구조입니다 — 오늘은 선생님들이 학생이 되어 보세요.</p>
+    <div class="acts" id="actList"></div>
+  </section>
+
+  <!-- 활동 화면 -->
+  <section id="actView" class="hidden">
+    <div style="margin-top:18px"><button class="btn sm" id="backBtn">← 활동 목록</button></div>
+    <h2 id="actTitle"></h2>
+    <p class="lead" id="actDesc"></p>
+    <div id="actStatus"></div>
+    <div id="actForm"></div>
+    <div id="actTabs" class="tabs"></div>
+    <div id="actBody"></div>
+  </section>
+</main>
+
+<script>
+const LS_KEY = 'ws261031_me';
+let me = null;
+try { me = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) {}
+let state = {};
+let curAct = null;     // 지금 보고 있는 활동 id
+let viewTab = 'mine';  // 'mine'(우리 모둠) | 'all' | 모둠 id
+const $ = id => document.getElementById(id);
+
+/* ---------- 로그인 ---------- */
+$('loginBtn').onclick = login;
+$('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) login(); });
+async function login() {
+  const name = $('nameInput').value.trim().replace(/\s+/g, ' ');
+  if (!name) { $('loginMsg').textContent = '이름이나 별명을 입력해 주세요.'; return; }
+  $('loginBtn').disabled = true;
+  try {
+    const users = (await ROOT.child('users').once('value')).val() || {};
+    const found = Object.entries(users).find(([, u]) => u.name === name);
+    let uid;
+    if (found) {
+      if (!confirm(`"${name}" 이름이 이미 있어요.\n\n본인이면 [확인] → 이어서 들어갑니다.\n다른 분이면 [취소] → 별명을 바꿔 주세요.`)) { $('loginBtn').disabled = false; return; }
+      uid = found[0];
+    } else {
+      uid = ROOT.child('users').push().key;
+      await ROOT.child('users/' + uid).set({ name, t: firebase.database.ServerValue.TIMESTAMP });
+    }
+    me = { uid, name };
+    try { localStorage.setItem(LS_KEY, JSON.stringify(me)); } catch (e) {}
+    route();
+  } catch (e) {
+    $('loginMsg').textContent = '접속에 실패했어요. 와이파이를 확인하고 다시 눌러 주세요.';
+  }
+  $('loginBtn').disabled = false;
+}
+$('logoutBtn').onclick = () => {
+  if (!confirm('나가면 다음에 같은 이름으로 다시 들어오면 됩니다. 나갈까요?')) return;
+  me = null; try { localStorage.removeItem(LS_KEY); } catch (e) {}
+  location.hash = ''; route();
+};
+
+/* ---------- 실시간 데이터 ---------- */
+ROOT.on('value', snap => {
+  state = snap.val() || {};
+  // 관리자가 전체 초기화하면 저장된 로그인도 무효
+  if (me && !(state.users && state.users[me.uid])) {
+    me = null; try { localStorage.removeItem(LS_KEY); } catch (e) {}
+    route(); return;
+  }
+  renderLive();
+});
+
+window.addEventListener('hashchange', route);
+function route() {
+  const m = location.hash.match(/act=(\w+)/);
+  const act = m && actById(m[1]);
+  $('loginView').classList.toggle('hidden', !!me);
+  $('meBox').classList.toggle('hidden', !me);
+  if (!me) { $('hubView').classList.add('hidden'); $('actView').classList.add('hidden'); $('nameInput').focus(); return; }
+  $('meName').textContent = me.name;
+  if (act) {
+    if (curAct !== act.id) { curAct = act.id; viewTab = 'mine'; enterAct(act); }
+    $('hubView').classList.add('hidden'); $('actView').classList.remove('hidden');
+  } else {
+    curAct = null;
+    $('hubView').classList.remove('hidden'); $('actView').classList.add('hidden');
+  }
+  renderLive();
+}
+$('backBtn').onclick = () => { location.hash = ''; };
+
+const isOpen = id => !!(state.open && state.open[id]);
+const myGroup = () => me && groupIdOf(state, me.uid);
+const mySub = act => me && state.subs && state.subs[act] && state.subs[act][me.uid];
+
+/* 입력 중인 칸이 지워지지 않도록: 폼은 활동에 들어갈 때 한 번만 그리고, 실시간 갱신은 목록·상태만 다시 그린다 */
+function renderLive() {
+  if (!me) return;
+  $('meGroup').innerHTML = groupBadge(myGroup());
+  if (!curAct) return renderHub();
+  const act = actById(curAct);
+  renderStatus(act);
+  if (act.type === 'group') renderBoard();
+  else if (act.type === 'vote') renderVote();
+  else { renderTabs(); renderSubs(act); syncFormLock(act); }
+}
+
+/* ---------- 활동 목록 ---------- */
+function renderHub() {
+  $('actList').innerHTML = ACTS.map(a => {
+    const open = isOpen(a.id);
+    let done = false;
+    if (a.type === 'group') done = !!myGroup();
+    else if (a.type === 'vote') done = !!(state.votes && state.votes[me.uid]);
+    else done = !!mySub(a.id);
+    return `<div class="act ${open ? '' : 'closed'}" onclick="location.hash='act=${a.id}'">
+      <div class="no">${a.no}</div>
+      <div><h3>${esc(a.title)}</h3>
+        <div class="tags">${open ? '<span class="tag open">● 진행 중</span>' : '<span class="tag">닫힘</span>'}${done ? '<span class="tag done">✓ 완료</span>' : ''}</div>
+      </div></div>`;
+  }).join('');
+}
+
+/* ---------- 활동 진입 ---------- */
+function enterAct(act) {
+  $('actTitle').textContent = `${act.no}. ${act.title}`;
+  $('actDesc').textContent = act.desc;
+  $('actForm').innerHTML = ''; $('actTabs').innerHTML = ''; $('actBody').innerHTML = '';
+  if (act.type === 'submit') buildForm(act);
+  window.scrollTo(0, 0);
+}
+
+function renderStatus(act) {
+  const open = isOpen(act.id), gid = myGroup();
+  let html = '';
+  if (act.type === 'group') {
+    if (gid) html = `<div class="banner go">🎉 ${groupById(gid).name} 모둠에 들어갔어요! 모둠원이 다 모일 때까지 기다려 주세요.</div>`;
+    else if (open) html = `<div class="banner go">🏃 지금 열렸어요! 선착순입니다 — 상의한 색을 빨리 누르세요.</div>`;
+    else html = `<div class="banner wait">⏳ 아직 닫혀 있어요. 그동안 같은 테이블 선생님들과 무슨 색을 고를지 상의해 두세요.</div>`;
+  } else {
+    if (!gid) html = `<div class="banner wait">먼저 <a href="#act=group">0. 모둠 들어가기</a>를 해 주세요.</div>`;
+    else if (!open) html = `<div class="banner info">지금은 제출이 닫혀 있어요. 올라온 작품은 둘러볼 수 있습니다.</div>`;
+  }
+  $('actStatus').innerHTML = html;
+}
+
+/* ---------- 0. 모둠 들어가기 (선착순) ---------- */
+function renderBoard() {
+  const open = isOpen('group'), mine = myGroup();
+  $('actBody').innerHTML = `<div class="board">${GROUPS.map(g => {
+    const ms = membersOf(state, g.id), full = ms.length >= GROUP_SIZE;
+    const seats = [];
+    for (let i = 0; i < GROUP_SIZE; i++) {
+      const m = ms[i];
+      seats.push(m ? `<div class="seat ${m.uid === me.uid ? 'mine' : ''}">${i + 1}. ${esc(m.name)}</div>`
+                   : `<div class="seat empty">${i + 1}. 빈자리</div>`);
+    }
+    let btn = '';
+    if (mine === g.id) btn = `<button class="btn pri" disabled>우리 모둠 ✓</button>`;
+    else if (!mine) btn = `<button class="btn" ${open && !full ? '' : 'disabled'} onclick="joinGroup('${g.id}')">${full ? '마감' : '이 모둠 들어가기'}</button>`;
+    return `<div class="gcol ${full ? 'full' : ''}" style="--gc:${g.c};--gbg:${g.bg}">
+      <h3>${g.name}<span>${ms.length}/${GROUP_SIZE}</span></h3>${seats.join('')}${btn}</div>`;
+  }).join('')}</div><p class="msg" id="joinMsg" style="margin-top:10px"></p>`;
+}
+
+function joinGroup(gid) {
+  if (!isOpen('group')) return;
+  const msg = $('joinMsg');
+  let reason = '';
+  // 여러 명이 동시에 눌러도 자리가 겹치지 않도록 트랜잭션으로 한 명씩 처리
+  ROOT.child('groups').transaction(cur => {
+    cur = cur || {};
+    for (const g of GROUPS) if (cur[g.id] && cur[g.id][me.uid]) { reason = 'already'; return; }
+    const m = cur[gid] || {};
+    if (Object.keys(m).length >= GROUP_SIZE) { reason = 'full'; return; }
+    reason = '';
+    m[me.uid] = { name: me.name, t: Date.now() };
+    cur[gid] = m;
+    return cur;
+  }, (err, committed) => {
+    if (err) { msg.className = 'msg err'; msg.textContent = '연결이 불안정해요. 다시 눌러 주세요.'; return; }
+    if (!committed) {
+      msg.className = 'msg err';
+      msg.textContent = reason === 'full' ? `아쉽게도 ${groupById(gid).name} 모둠은 방금 마감됐어요! 다른 색을 골라 주세요.` : '이미 다른 모둠에 들어가 있어요.';
+    }
+  });
+}
+
+/* ---------- 제출 활동 ---------- */
+function buildForm(act) {
+  const s = mySub(act.id) || {};
+  $('actForm').innerHTML = `<div class="card form" id="theForm">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <b>✏️ 내 제출</b><span class="msg" id="formState">${s.t ? '제출됨 · ' + fmtTime(s.t) : '아직 제출하지 않았어요'}</span></div>
+    ${act.fields.map(f => `<label for="f_${f.k}">${esc(f.label)}${f.req ? ' *' : ''}</label>` + (f.type === 'area'
+      ? `<textarea id="f_${f.k}" placeholder="${esc(f.ph || '')}">${esc(s[f.k] || '')}</textarea>`
+      : `<input id="f_${f.k}" type="${f.type === 'url' ? 'url' : 'text'}" placeholder="${esc(f.ph || '')}" value="${esc(s[f.k] || '')}">`)).join('')}
+    <div class="row"><button class="btn pri" id="saveBtn">제출하기</button><span class="msg" id="saveMsg">제출한 뒤에도 고쳐서 다시 제출할 수 있어요.</span></div>
+  </div>`;
+  $('saveBtn').onclick = () => saveSub(act);
+}
+function syncFormLock(act) {
+  const can = isOpen(act.id) && !!myGroup();
+  const btn = $('saveBtn'); if (btn) btn.disabled = !can;
+  const s = mySub(act.id), st = $('formState');
+  if (st) st.textContent = s && s.t ? '제출됨 · ' + fmtTime(s.t) : '아직 제출하지 않았어요';
+}
+async function saveSub(act) {
+  const msg = $('saveMsg');
+  const v = {};
+  for (const f of act.fields) v[f.k] = $('f_' + f.k).value.trim();
+  const miss = act.fields.find(f => f.req && !v[f.k]);
+  if (miss) { msg.className = 'msg err'; msg.textContent = `"${miss.label}"을(를) 입력해 주세요.`; return; }
+  if (v.link && !safeUrl(v.link)) { msg.className = 'msg err'; msg.textContent = '공유 링크는 https:// 로 시작하는 주소여야 해요.'; return; }
+  if (!isOpen(act.id) || !myGroup()) return;
+  $('saveBtn').disabled = true;
+  try {
+    await ROOT.child(`subs/${act.id}/${me.uid}`).set({ ...v, name: me.name, group: myGroup(), t: firebase.database.ServerValue.TIMESTAMP });
+    msg.className = 'msg ok'; msg.textContent = '✓ 제출했어요! 아래에서 우리 모둠 작품을 둘러보세요.';
+  } catch (e) { msg.className = 'msg err'; msg.textContent = '저장에 실패했어요. 다시 눌러 주세요.'; }
+  $('saveBtn').disabled = false;
+}
+
+function renderTabs() {
+  const gid = myGroup();
+  const tabs = [['mine', '우리 모둠'], ['all', '전체 둘러보기'], ...GROUPS.map(g => [g.id, g.name])];
+  if (!gid && viewTab === 'mine') viewTab = 'all';
+  $('actTabs').innerHTML = tabs.filter(([k]) => k !== 'mine' || gid)
+    .map(([k, l]) => `<button class="${viewTab === k ? 'on' : ''}" onclick="viewTab='${k}';renderLive()">${l}</button>`).join('');
+}
+function listSubs(actId) {
+  const subs = (state.subs && state.subs[actId]) || {};
+  return Object.entries(subs).map(([uid, s]) => ({ uid, ...s }));
+}
+function likeCount(actId, uid) { return Object.keys((state.likes && state.likes[actId] && state.likes[actId][uid]) || {}).length; }
+function iLiked(actId, uid) { return !!(state.likes && state.likes[actId] && state.likes[actId][uid] && state.likes[actId][uid][me.uid]); }
+function toggleLike(actId, uid) {
+  ROOT.child(`likes/${actId}/${uid}/${me.uid}`).set(iLiked(actId, uid) ? null : true);
+}
+function subCard(act, s, extra) {
+  const g = groupById(s.group) || {};
+  const link = safeUrl(s.link);
+  const body = act.fields.filter(f => !['title', 'link'].includes(f.k) && s[f.k]).map(f =>
+    f.k === 'prompt' ? `<details><summary>💬 ${esc(f.label)} 보기</summary><div class="f">${esc(s[f.k])}</div></details>`
+                     : `<div class="f"><b>${esc(f.label)}</b>${esc(s[f.k])}</div>`).join('');
+  const n = likeCount(act.id, s.uid);
+  return `<div class="sub" style="--gc:${g.c || '#cfd4dc'}">
+    <h4>${esc(s.title || '(제목 없음)')}</h4>
+    <div class="who">${groupBadge(s.group)} ${esc(s.name)}${s.uid === me.uid ? ' (나)' : ''} · ${fmtTime(s.t)}</div>
+    ${body}
+    <div class="acts2">
+      ${link ? `<a class="btn sm pri" href="${esc(link)}" target="_blank" rel="noopener">▶ 열어 보기</a>` : ''}
+      <button class="like ${iLiked(act.id, s.uid) ? 'on' : ''}" onclick="toggleLike('${act.id}','${s.uid}')">♥ ${n}</button>
+      ${extra || ''}
+    </div></div>`;
+}
+function renderSubs(act) {
+  const gid = myGroup();
+  let list = listSubs(act.id);
+  if (viewTab === 'mine') list = list.filter(s => s.group === gid);
+  else if (viewTab !== 'all') list = list.filter(s => s.group === viewTab);
+  list.sort((a, b) => (b.t || 0) - (a.t || 0));
+  // 우리 모둠 탭에서는 아직 안 낸 모둠원도 보여 준다
+  let pending = '';
+  if (viewTab === 'mine' && gid) {
+    const waiting = membersOf(state, gid).filter(m => !list.some(s => s.uid === m.uid)).map(m => esc(m.name));
+    if (waiting.length) pending = `<p class="msg" style="margin-top:10px">아직 제출 전: ${waiting.join(', ')}</p>`;
+  }
+  $('actBody').innerHTML = pending + (list.length
+    ? `<div class="subs">${list.map(s => subCard(act, s)).join('')}</div>`
+    : `<div class="empty-note">아직 올라온 작품이 없어요.</div>`);
+}
+
+/* ---------- 4. 모둠 대표작 뽑기 ---------- */
+function renderVote() {
+  const gid = myGroup();
+  $('actTabs').innerHTML = '';
+  if (!gid) { $('actBody').innerHTML = ''; return; }
+  const open = isOpen('pick');
+  const votes = state.votes || {};
+  const myVote = votes[me.uid] && votes[me.uid].key;
+  const tally = {};
+  for (const [voter, v] of Object.entries(votes)) if (v.group === gid) tally[v.key] = (tally[v.key] || 0) + 1;
+  const max = Math.max(0, ...Object.values(tally));
+  let html = '';
+  for (const act of ACTS.filter(a => a.type === 'submit' && a.id !== 'plan')) {
+    const list = listSubs(act.id).filter(s => s.group === gid);
+    if (!list.length) continue;
+    html += `<h3 style="margin:22px 0 0">${esc(act.title)}</h3><div class="subs">` + list.map(s => {
+      const key = act.id + ':' + s.uid, n = tally[key] || 0, mine = s.uid === me.uid;
+      const extra = `<button class="btn sm vote-btn ${myVote === key ? 'on' : ''}" ${open && !mine ? '' : 'disabled'} onclick="castVote('${key}')">${myVote === key ? '✓ 투표함' : mine ? '내 작품' : '투표'}</button>
+        <span class="msg">${n}표</span>${n && n === max ? ' <span class="crown">👑 1위</span>' : ''}`;
+      return subCard(act, s, extra);
+    }).join('') + '</div>';
+  }
+  $('actBody').innerHTML = html || '<div class="empty-note">우리 모둠에 올라온 작품이 아직 없어요.</div>';
+}
+function castVote(key) {
+  if (!isOpen('pick')) return;
+  ROOT.child('votes/' + me.uid).set({ key, group: myGroup(), t: firebase.database.ServerValue.TIMESTAMP });
+}
+
+route();
+</script>
+</body>
+</html>

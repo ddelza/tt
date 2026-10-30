@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>실습실 관리 · 2026.10.31</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="common.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <h1>🛠 실습실 관리 <small>강사용</small></h1>
+  <a class="btn sm ghost" href="./" target="_blank">참여 화면 열기 ↗</a>
+</div></header>
+
+<main class="wrap">
+  <section id="gate" class="card login">
+    <h2 style="margin-top:4px">관리자 비밀번호</h2>
+    <input id="pw" type="password" placeholder="비밀번호">
+    <button class="btn pri" id="pwBtn" style="width:100%">들어가기</button>
+    <p class="msg" id="pwMsg"></p>
+  </section>
+
+  <section id="panel" class="hidden">
+    <h2>① 활동 열기 · 닫기</h2>
+    <p class="lead">켜는 순간 참여 화면에 바로 반영됩니다. "모둠 들어가기"를 켜면 선착순이 시작돼요.</p>
+    <div class="toggles" id="toggles"></div>
+
+    <h2>② 모둠 현황 <span class="msg" id="userCount"></span></h2>
+    <div class="board" id="board"></div>
+    <div id="unassigned" class="msg" style="margin-top:10px"></div>
+
+    <h2>③ 제출 현황</h2>
+    <div class="card tbl-wrap" style="padding:10px 14px"><table class="grid" id="statusTable"></table></div>
+
+    <h2>④ 모둠 대표작 투표</h2>
+    <div class="card" id="voteBox"></div>
+
+    <h2>⑤ 데이터</h2>
+    <div class="card">
+      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="csvBtn">📥 전체 제출물 CSV 내려받기</button>
+        <button class="btn danger" id="clearGroups">모둠 배정 모두 비우기</button>
+        <button class="btn danger" id="resetAll">⚠️ 전체 초기화</button>
+      </div>
+      <p class="msg" style="margin-top:10px">전체 초기화는 참여자·모둠·제출물·투표를 모두 지웁니다. 리허설 뒤 실제 연수 전에 한 번 누르세요.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+// 공개 DB라 진짜 보안은 아니고, 참여자가 실수로 관리 화면을 건드리지 않게 막는 정도
+const ADMIN_PW = 'ws1031!';
+const $ = id => document.getElementById(id);
+let state = {};
+
+function unlock() { $('gate').classList.add('hidden'); $('panel').classList.remove('hidden'); }
+try { if (sessionStorage.getItem('ws261031_admin') === '1') unlock(); } catch (e) {}
+$('pwBtn').onclick = () => {
+  if ($('pw').value !== ADMIN_PW) { $('pwMsg').className = 'msg err'; $('pwMsg').textContent = '비밀번호가 다릅니다.'; return; }
+  try { sessionStorage.setItem('ws261031_admin', '1'); } catch (e) {}
+  unlock();
+};
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('pwBtn').click(); });
+
+ROOT.on('value', snap => { state = snap.val() || {}; render(); });
+
+function render() {
+  const users = state.users || {};
+  const ucount = Object.keys(users).length;
+  const assigned = GROUPS.reduce((n, g) => n + membersOf(state, g.id).length, 0);
+  $('userCount').textContent = `접속 ${ucount}명 · 모둠 배정 ${assigned}명`;
+
+  $('toggles').innerHTML = ACTS.map(a => {
+    const on = !!(state.open && state.open[a.id]);
+    return `<div class="toggle ${on ? 'on' : ''}"><span><b>${a.no}.</b> ${esc(a.title)}</span>
+      <button class="btn sm ${on ? 'pri' : ''}" onclick="setOpen('${a.id}',${!on})">${on ? '● 열림' : '닫힘'}</button></div>`;
+  }).join('');
+
+  const moveOpts = uid => `<select onchange="moveTo('${uid}',this.value)" style="font-size:12px">
+      <option value="">이동</option>${GROUPS.map(g => `<option value="${g.id}">${g.name}</option>`).join('')}<option value="__out">빼기</option></select>`;
+  $('board').innerHTML = GROUPS.map(g => {
+    const ms = membersOf(state, g.id);
+    const seats = [];
+    for (let i = 0; i < GROUP_SIZE; i++) {
+      const m = ms[i];
+      seats.push(m ? `<div class="seat"><span>${i + 1}. ${esc(m.name)}</span>${moveOpts(m.uid)}</div>` : `<div class="seat empty">${i + 1}. 빈자리</div>`);
+    }
+    for (let i = GROUP_SIZE; i < ms.length; i++) seats.push(`<div class="seat"><span>+ ${esc(ms[i].name)}</span>${moveOpts(ms[i].uid)}</div>`);
+    return `<div class="gcol" style="--gc:${g.c};--gbg:${g.bg}"><h3>${g.name}<span>${ms.length}/${GROUP_SIZE}</span></h3>${seats.join('')}</div>`;
+  }).join('');
+
+  const un = Object.entries(users).filter(([uid]) => !groupIdOf(state, uid));
+  $('unassigned').innerHTML = un.length
+    ? '모둠 없음: ' + un.map(([uid, u]) => `<span style="margin-right:10px">${esc(u.name)} ${moveOpts(uid)}</span>`).join('')
+    : '';
+
+  // 제출 현황표: 사람 × 활동
+  const subActs = ACTS.filter(a => a.type !== 'group');
+  const rows = Object.entries(users).map(([uid, u]) => ({ uid, ...u, g: groupIdOf(state, uid) }))
+    .sort((a, b) => GROUPS.findIndex(g => g.id === a.g) - GROUPS.findIndex(g => g.id === b.g) || a.t - b.t);
+  $('statusTable').innerHTML = `<tr><th>모둠</th><th>이름</th>${subActs.map(a => `<th>${a.no}</th>`).join('')}</tr>` +
+    rows.map(r => `<tr><td>${groupBadge(r.g)}</td><td>${esc(r.name)}</td>${subActs.map(a => {
+      const done = a.type === 'vote' ? !!(state.votes && state.votes[r.uid]) : !!(state.subs && state.subs[a.id] && state.subs[a.id][r.uid]);
+      return `<td>${done ? '✅' : '·'}</td>`;
+    }).join('')}</tr>`).join('') +
+    `<tr><th colspan="2">제출 수</th>${subActs.map(a => {
+      const n = a.type === 'vote' ? Object.keys(state.votes || {}).length : Object.keys((state.subs && state.subs[a.id]) || {}).length;
+      return `<th>${n}</th>`;
+    }).join('')}</tr>`;
+
+  // 투표 결과: 모둠별 1위
+  const votes = state.votes || {};
+  $('voteBox').innerHTML = GROUPS.map(g => {
+    const tally = {};
+    for (const v of Object.values(votes)) if (v.group === g.id) tally[v.key] = (tally[v.key] || 0) + 1;
+    const ranked = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+    const items = ranked.slice(0, 3).map(([key, n]) => {
+      const [actId, uid] = key.split(':');
+      const s = (state.subs && state.subs[actId] && state.subs[actId][uid]) || {};
+      const link = safeUrl(s.link);
+      return `${esc(s.title || '?')} (${esc(s.name || '')}, ${actById(actId).no}번) — <b>${n}표</b>${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">열기</a>` : ''}`;
+    });
+    return `<p style="margin:6px 0">${groupBadge(g.id)} ${items.length ? items.join(' · ') : '<span class="msg">아직 투표 없음</span>'}</p>`;
+  }).join('');
+}
+
+function setOpen(id, on) { ROOT.child('open/' + id).set(on ? true : null); }
+
+function moveTo(uid, gid) {
+  if (!gid) return;
+  const u = (state.users || {})[uid];
+  ROOT.child('groups').transaction(cur => {
+    cur = cur || {};
+    for (const g of GROUPS) if (cur[g.id]) delete cur[g.id][uid];
+    if (gid !== '__out') { cur[gid] = cur[gid] || {}; cur[gid][uid] = { name: u ? u.name : '?', t: Date.now() }; }
+    return cur;
+  });
+  // 이미 낸 제출물의 모둠 표시도 함께 옮긴다
+  const newG = gid === '__out' ? null : gid;
+  for (const a of ACTS) if (state.subs && state.subs[a.id] && state.subs[a.id][uid]) ROOT.child(`subs/${a.id}/${uid}/group`).set(newG);
+}
+
+$('clearGroups').onclick = () => {
+  if (confirm('모둠 배정을 모두 비울까요? (제출물은 남습니다)')) ROOT.child('groups').remove();
+};
+$('resetAll').onclick = () => {
+  if (prompt('전체 초기화하려면 "초기화"라고 입력하세요.') === '초기화') ROOT.remove();
+};
+
+$('csvBtn').onclick = () => {
+  const users = state.users || {};
+  const rows = [['활동', '모둠', '이름', '제목', '링크', '내용', '좋아요', '제출 시각']];
+  for (const a of ACTS.filter(x => x.type === 'submit')) {
+    for (const [uid, s] of Object.entries((state.subs && state.subs[a.id]) || {})) {
+      const body = a.fields.filter(f => !['title', 'link'].includes(f.k)).map(f => s[f.k] ? `[${f.label}] ${s[f.k]}` : '').filter(Boolean).join('\n');
+      const likes = Object.keys((state.likes && state.likes[a.id] && state.likes[a.id][uid]) || {}).length;
+      rows.push([a.title, (groupById(s.group) || {}).name || '', s.name || (users[uid] || {}).name || '', s.title || '', s.link || '', body, likes, s.t ? new Date(s.t).toLocaleString('ko-KR') : '']);
+    }
+  }
+  const csv = '﻿' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = '바이브코딩실습실_261031.csv';
+  a.click();
+};
+</script>
+</body>
+</html>
