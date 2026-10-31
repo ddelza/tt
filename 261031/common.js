@@ -16,8 +16,10 @@ const GROUPS = [
 
 // 활동 순서 = 강의 흐름 (도입 → 실습①②③ → 대표작 → 수업 적용)
 const ACTS = [
-  { id: 'group', no: 0, type: 'group', title: '모둠 들어가기',
+  { id: 'group', no: '0-1', type: 'group', title: '모둠 들어가기',
     desc: '선생님이 열면 선착순입니다. 같은 테이블 선생님들과 무슨 색을 고를지 먼저 상의하세요. 한 모둠은 5명까지, 먼저 다 차지한 색이 임자입니다!' },
+  { id: 'survey', no: '0-2', type: 'survey', title: '사전 설문 — 우리는 어디쯤?',
+    desc: '바이브코딩 경험과 지금 쓰고 있는 AI를 알려 주세요. 결과는 바로 아래와 화면에 함께 띄워 봅니다. (이름은 공개되지 않아요)' },
   { id: 'sim', no: 1, type: 'submit', title: '실습① 내 수업용 시뮬레이션',
     desc: '4요소(무엇을·누구를·어떻게 조작·무엇을 보여줄지)를 넣어 만들고, 두 번 이상 대화로 고친 뒤 공유 링크를 올려 주세요.',
     fields: [
@@ -68,6 +70,41 @@ const ACTS = [
       { k: 'worry', label: '걱정되는 점 · 필요한 도움', type: 'area' },
     ] },
 ];
+// 0-2 사전 설문 문항
+const SURVEY = [
+  { k: 'lecture', label: '바이브코딩 관련 연수를 들어 본 적이 있나요?', type: 'one',
+    opts: ['오늘이 처음이에요', '1번 들어 봤어요', '2번 이상 들어 봤어요'] },
+  { k: 'exp', label: '바이브코딩(AI에게 말로 시켜 앱 만들기)을 직접 해 본 적이 있나요?', type: 'one',
+    opts: ['해 본 적 없어요', '한두 번 따라 해 봤어요', '수업·업무용으로 만들어 써 봤어요', '자주 만들어 써요'] },
+  { k: 'paid', label: '지금 유료로 구독 중인 AI가 있나요? (여러 개 선택 가능)', type: 'multi',
+    opts: ['없음', 'ChatGPT (Plus·Pro)', 'Gemini (Google AI Pro 등)', 'Claude (Pro·Max)', 'Perplexity', '뤼튼 등 국내 AI', '그 밖의 AI'] },
+  { k: 'hope', label: '오늘 연수에서 가장 기대하는 것 (선택)', type: 'text', ph: '예: 수업에 바로 쓸 시뮬레이션 하나 만들기' },
+];
+function surveyResultsHTML(state) {
+  const rows = Object.values((state && state.survey) || {});
+  const n = rows.length;
+  if (!n) return '<div class="empty-note">아직 응답이 없어요.</div>';
+  let h = `<div class="sv-n">응답 <b>${n}</b>명</div>`;
+  for (const q of SURVEY) {
+    if (q.type === 'text') {
+      const t = rows.map(r => r[q.k]).filter(Boolean);
+      if (t.length) h += `<div class="sv-q"><h4>${esc(q.label.replace(' (선택)', ''))}</h4><div class="sv-words">${t.map(x => `<span>${esc(x)}</span>`).join('')}</div></div>`;
+      continue;
+    }
+    const has = (r, o) => q.type === 'multi' ? Object.values(r[q.k] || {}).includes(o) : r[q.k] === o;
+    const cnt = q.opts.map(o => rows.filter(r => has(r, o)).length);
+    const max = Math.max(1, ...cnt);
+    h += `<div class="sv-q"><h4>${esc(q.label.replace(' (여러 개 선택 가능)', ''))}</h4>` + q.opts.map((o, i) =>
+      `<div class="sv-row"><span class="sv-l">${esc(o)}</span><span class="sv-bar"><i style="width:${cnt[i] / max * 100}%;--h:${200 + i * 28}"></i></span><b>${cnt[i]}명</b><small>${Math.round(cnt[i] / n * 100)}%</small></div>`).join('') + '</div>';
+  }
+  return h;
+}
+function isDone(state, act, uid) {
+  if (act.type === 'group') return !!groupIdOf(state, uid);
+  if (act.type === 'vote') return !!(state.votes && state.votes[uid]);
+  if (act.type === 'survey') return !!(state.survey && state.survey[uid]);
+  return !!(state.subs && state.subs[act.id] && state.subs[act.id][uid]);
+}
 const actById = id => ACTS.find(a => a.id === id);
 const groupById = id => GROUPS.find(g => g.id === id);
 

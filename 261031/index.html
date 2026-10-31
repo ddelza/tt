@@ -89,8 +89,12 @@ $('logoutBtn').onclick = () => {
 };
 
 /* ---------- 실시간 데이터 ---------- */
+let loaded = false;
 ROOT.on('value', snap => {
   state = snap.val() || {};
+  // 주소로 바로 활동에 들어온 경우, 데이터가 오기 전에 빈 폼이 그려졌으므로 첫 데이터에서 다시 그린다
+  const first = !loaded; loaded = true;
+  if (first && curAct && me) enterAct(actById(curAct));
   // 관리자가 전체 초기화하면 저장된 로그인도 무효
   if (me && !(state.users && state.users[me.uid])) {
     me = null; try { localStorage.removeItem(LS_KEY); } catch (e) {}
@@ -131,6 +135,7 @@ function renderLive() {
   renderStatus(act);
   if (act.type === 'group') renderBoard();
   else if (act.type === 'vote') renderVote();
+  else if (act.type === 'survey') renderSurvey();
   else { renderTabs(); renderSubs(act); syncFormLock(act); }
 }
 
@@ -138,10 +143,7 @@ function renderLive() {
 function renderHub() {
   $('actList').innerHTML = ACTS.map(a => {
     const open = isOpen(a.id);
-    let done = false;
-    if (a.type === 'group') done = !!myGroup();
-    else if (a.type === 'vote') done = !!(state.votes && state.votes[me.uid]);
-    else done = !!mySub(a.id);
+    const done = isDone(state, a, me.uid);
     return `<div class="act ${open ? '' : 'closed'}" onclick="location.hash='act=${a.id}'">
       <div class="no">${a.no}</div>
       <div><h3>${esc(a.title)}</h3>
@@ -158,6 +160,7 @@ function enterAct(act) {
     `<a class="btn pri" style="margin:12px 8px 0 0;display:inline-block;text-decoration:none" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join(''));
   $('actForm').innerHTML = ''; $('actTabs').innerHTML = ''; $('actBody').innerHTML = '';
   if (act.type === 'submit') buildForm(act);
+  if (act.type === 'survey') buildSurvey();
   window.scrollTo(0, 0);
 }
 
@@ -169,8 +172,9 @@ function renderStatus(act) {
     else if (open) html = `<div class="banner go">🏃 지금 열렸어요! 선착순입니다 — 상의한 색을 빨리 누르세요.</div>`;
     else html = `<div class="banner wait">⏳ 아직 닫혀 있어요. 그동안 같은 테이블 선생님들과 무슨 색을 고를지 상의해 두세요.</div>`;
   } else {
-    if (!gid) html = `<div class="banner wait">먼저 <a href="#act=group">0. 모둠 들어가기</a>를 해 주세요.</div>`;
-    else if (!open) html = `<div class="banner info">지금은 제출이 닫혀 있어요. 올라온 작품은 둘러볼 수 있습니다.</div>`;
+    if (!gid && act.type !== 'survey') html = `<div class="banner wait">먼저 <a href="#act=group">0. 모둠 들어가기</a>를 해 주세요.</div>`;
+    else if (!open) html = act.type === 'survey' ? `<div class="banner info">설문이 닫혀 있어요. 결과는 아래에서 볼 수 있습니다.</div>`
+                                                 : `<div class="banner info">지금은 제출이 닫혀 있어요. 올라온 작품은 둘러볼 수 있습니다.</div>`;
   }
   $('actStatus').innerHTML = html;
 }
@@ -300,6 +304,43 @@ function renderSubs(act) {
   $('actBody').innerHTML = pending + (list.length
     ? `<div class="subs">${list.map(s => subCard(act, s)).join('')}</div>`
     : `<div class="empty-note">아직 올라온 작품이 없어요.</div>`);
+}
+
+/* ---------- 0-2. 사전 설문 ---------- */
+function buildSurvey() {
+  const s = (state.survey && state.survey[me.uid]) || {};
+  const picked = (q, o) => q.type === 'multi' ? Object.values(s[q.k] || {}).includes(o) : s[q.k] === o;
+  $('actForm').innerHTML = `<div class="card form">${SURVEY.map(q => `<label>${esc(q.label)}</label>` + (q.type === 'text'
+    ? `<input id="sv_${q.k}" maxlength="60" placeholder="${esc(q.ph || '')}" value="${esc(s[q.k] || '')}">`
+    : `<div class="sv-opts">${q.opts.map((o, i) => `<label class="sv-opt"><input type="${q.type === 'multi' ? 'checkbox' : 'radio'}" name="sv_${q.k}" value="${esc(o)}" ${picked(q, o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')}</div>`)).join('')}
+    <div class="row"><button class="btn pri" id="svBtn">${s.t ? '다시 제출하기' : '제출하기'}</button><span class="msg" id="svMsg"></span></div></div>`;
+  // '없음'과 다른 항목은 함께 고를 수 없게
+  document.querySelectorAll('input[name="sv_paid"]').forEach(cb => cb.addEventListener('change', () => {
+    if (!cb.checked) return;
+    document.querySelectorAll('input[name="sv_paid"]').forEach(o => { if ((cb.value === '없음') !== (o.value === '없음')) o.checked = false; });
+  }));
+  $('svBtn').onclick = saveSurvey;
+}
+async function saveSurvey() {
+  const msg = $('svMsg'), v = {};
+  for (const q of SURVEY) {
+    if (q.type === 'text') { v[q.k] = $('sv_' + q.k).value.trim(); continue; }
+    const sel = [...document.querySelectorAll(`input[name="sv_${q.k}"]:checked`)].map(i => i.value);
+    if (!sel.length) { msg.className = 'msg err'; msg.textContent = `"${q.label}"에 답해 주세요.`; return; }
+    v[q.k] = q.type === 'multi' ? sel : sel[0];
+  }
+  if (!isOpen('survey')) return;
+  $('svBtn').disabled = true;
+  try {
+    await ROOT.child('survey/' + me.uid).set({ ...v, t: firebase.database.ServerValue.TIMESTAMP });
+    msg.className = 'msg ok'; msg.textContent = '✓ 제출했어요! 아래에서 결과를 함께 보세요.';
+  } catch (e) { msg.className = 'msg err'; msg.textContent = '저장에 실패했어요. 다시 눌러 주세요.'; }
+  $('svBtn').disabled = false;
+}
+function renderSurvey() {
+  $('actTabs').innerHTML = '';
+  const btn = $('svBtn'); if (btn) btn.disabled = !isOpen('survey');
+  $('actBody').innerHTML = `<div class="card"><b>📊 실시간 결과</b>${surveyResultsHTML(state)}</div>`;
 }
 
 /* ---------- 4. 모둠 대표작 뽑기 ---------- */

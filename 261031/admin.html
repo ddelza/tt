@@ -29,6 +29,9 @@
     <p class="lead">켜는 순간 참여 화면에 바로 반영됩니다. "모둠 들어가기"를 켜면 선착순이 시작돼요.</p>
     <div class="toggles" id="toggles"></div>
 
+    <h2>📊 사전 설문 결과 <button class="btn sm pri" id="bigBtn" style="vertical-align:middle;margin-left:8px">⛶ 크게 보기 (화면 공유용)</button></h2>
+    <div class="card" id="surveyBox"></div>
+
     <h2>② 모둠 현황 <span class="msg" id="userCount"></span></h2>
     <div class="board" id="board"></div>
     <div id="unassigned" class="msg" style="margin-top:10px"></div>
@@ -50,6 +53,13 @@
     </div>
   </section>
 </main>
+<div class="big hidden" id="bigView">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+    <h2>📊 우리는 어디쯤? — 사전 설문 결과</h2>
+    <button class="btn" id="bigClose">✕ 닫기 (Esc)</button>
+  </div>
+  <div id="bigBody"></div>
+</div>
 
 <script>
 // 공개 DB라 진짜 보안은 아니고, 참여자가 실수로 관리 화면을 건드리지 않게 막는 정도
@@ -68,7 +78,18 @@ $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('pwBtn').cli
 
 ROOT.on('value', snap => { state = snap.val() || {}; render(); });
 
+function renderSurveyBoxes() {
+  const html = surveyResultsHTML(state);
+  $('surveyBox').innerHTML = html;
+  $('bigBody').innerHTML = `<div class="sv-cols">${html}</div>`;
+}
+$('bigBtn').onclick = () => { $('bigView').classList.remove('hidden'); if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); };
+function closeBig() { $('bigView').classList.add('hidden'); if (document.fullscreenElement) document.exitFullscreen(); }
+$('bigClose').onclick = closeBig;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBig(); });
+
 function render() {
+  renderSurveyBoxes();
   const users = state.users || {};
   const ucount = Object.keys(users).length;
   const assigned = GROUPS.reduce((n, g) => n + membersOf(state, g.id).length, 0);
@@ -104,11 +125,11 @@ function render() {
     .sort((a, b) => GROUPS.findIndex(g => g.id === a.g) - GROUPS.findIndex(g => g.id === b.g) || a.t - b.t);
   $('statusTable').innerHTML = `<tr><th>모둠</th><th>이름</th>${subActs.map(a => `<th>${a.no}</th>`).join('')}</tr>` +
     rows.map(r => `<tr><td>${groupBadge(r.g)}</td><td>${esc(r.name)}</td>${subActs.map(a => {
-      const done = a.type === 'vote' ? !!(state.votes && state.votes[r.uid]) : !!(state.subs && state.subs[a.id] && state.subs[a.id][r.uid]);
+      const done = isDone(state, a, r.uid);
       return `<td>${done ? '✅' : '·'}</td>`;
     }).join('')}</tr>`).join('') +
     `<tr><th colspan="2">제출 수</th>${subActs.map(a => {
-      const n = a.type === 'vote' ? Object.keys(state.votes || {}).length : Object.keys((state.subs && state.subs[a.id]) || {}).length;
+      const n = rows.filter(r => isDone(state, a, r.uid)).length;
       return `<th>${n}</th>`;
     }).join('')}</tr>`;
 
