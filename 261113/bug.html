@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자유낙하 시뮬레이터 · 버그 헌터</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0f1729;color:#e8ecf5;font-family:'Pretendard','Malgun Gothic',sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 40px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:#9aa6c4;margin:0 0 18px;font-size:14px}
+  .hunt{background:#3b2a07;border:1px solid #f0b429;color:#ffd978;border-radius:12px;padding:12px 16px;font-size:14px;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:300px 1fr;gap:18px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .panel{background:#18223a;border:1px solid #2a3756;border-radius:14px;padding:16px}
+  label{display:block;font-size:14px;color:#c4cde2;margin:14px 0 6px}
+  label b{color:#fff;float:right}
+  input[type=range]{width:100%}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .presets button,.go{border:1px solid #3b4d78;background:#22304f;color:#e8ecf5;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:inherit;font-size:13px}
+  .go{width:100%;margin-top:16px;padding:10px;font-size:15px;font-weight:700;background:#3b5bdb;border-color:#3b5bdb}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .stat{background:#22304f;border-radius:10px;padding:10px}
+  .stat small{color:#9aa6c4;font-size:12px}
+  .stat div{font-size:22px;font-weight:800;margin-top:2px}
+  canvas{width:100%;background:#0b1222;border-radius:10px;display:block}
+  .note{font-size:12.5px;color:#9aa6c4;margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪂 자유낙하 시뮬레이터</h1>
+  <p class="sub">높이, 질량, 행성을 바꿔 물체가 떨어지는 시간과 속도를 확인하세요. (공기 저항은 무시합니다)</p>
+  <div class="hunt">🐞 <b>버그 헌터 미션</b> — 이 앱은 AI가 만든 것처럼 그럴듯하지만 과학적으로 틀린 곳이 여러 군데 있습니다. 값을 바꿔 보고, 손계산과 물리 지식으로 찾아 실습실 4번에 적으세요.</div>
+
+  <div class="grid">
+    <div class="panel">
+      <label>낙하 높이 <b><span id="hV">20</span> m</b></label>
+      <input type="range" id="h" min="1" max="100" value="20">
+      <label>물체 질량 <b><span id="mV">1</span> kg</b></label>
+      <input type="range" id="m" min="1" max="20" value="1">
+      <label>중력가속도 g <b><span id="gV">9.8</span> m/s²</b></label>
+      <input type="range" id="g" min="1" max="30" step="0.1" value="9.8">
+      <div class="presets">
+        <button data-g="9.8">🌍 지구</button>
+        <button data-g="16.2">🌙 달</button>
+        <button data-g="3.7">🔴 화성</button>
+        <button data-g="24.8">🪐 목성</button>
+      </div>
+      <button class="go" id="go">▶ 떨어뜨리기</button>
+      <div class="stats">
+        <div class="stat"><small>낙하 시간</small><div id="tOut">-</div></div>
+        <div class="stat"><small>바닥 도달 속도</small><div id="vOut">-</div></div>
+      </div>
+      <p class="note">계산식: 낙하 시간 t = √(h ÷ g), 도달 속도 v = g × t</p>
+    </div>
+    <div class="panel">
+      <canvas id="cv" width="640" height="420"></canvas>
+      <p class="note">왼쪽: 낙하 애니메이션 · 오른쪽: 시간에 따른 높이 그래프</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+let anim = null;
+
+function params() {
+  const h = +$('h').value, m = +$('m').value, g = +$('g').value;
+  // 낙하 시간과 도달 속도
+  const t = Math.sqrt(h / g) / (1 + 0.04 * (m - 1));
+  const v = g * t;
+  return { h, m, g, t, v };
+}
+function showValues() {
+  $('hV').textContent = $('h').value; $('mV').textContent = $('m').value; $('gV').textContent = (+$('g').value).toFixed(1);
+  const p = params();
+  $('tOut').textContent = p.t.toFixed(2) + ' s';
+  $('vOut').textContent = p.v.toFixed(1) + ' m/s²';
+}
+function draw(p, elapsed) {
+  const W = cv.width, H = cv.height, top = 30, bottom = H - 30, x0 = 340, x1 = W - 20;
+  ctx.clearRect(0, 0, W, H);
+  // 바닥과 기준선
+  ctx.fillStyle = '#2a3756'; ctx.fillRect(40, bottom, 220, 6);
+  ctx.strokeStyle = '#2a3756'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(40, top); ctx.lineTo(260, top); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#9aa6c4'; ctx.font = '13px Pretendard, sans-serif';
+  ctx.fillText(p.h + ' m', 44, top - 8); ctx.fillText('0 m', 44, bottom + 22);
+  // 현재 높이
+  const frac = Math.min(elapsed / p.t, 1);
+  const y = top + (bottom - top) * frac;
+  const r = 8 + p.m * 0.8;
+  ctx.fillStyle = '#f0b429'; ctx.beginPath(); ctx.arc(150, y - r, r, 0, Math.PI * 2); ctx.fill();
+  // 그래프 축
+  ctx.strokeStyle = '#4a5b84'; ctx.beginPath(); ctx.moveTo(x0, top); ctx.lineTo(x0, bottom); ctx.lineTo(x1, bottom); ctx.stroke();
+  ctx.fillStyle = '#9aa6c4'; ctx.fillText('높이(m)', x0 - 10, top - 10); ctx.fillText('시간(s)', x1 - 50, bottom + 22);
+  ctx.fillText(p.t.toFixed(2), x1 - 30, bottom + 40 > H ? bottom + 14 : bottom + 14);
+  // 높이-시간 그래프
+  ctx.strokeStyle = '#3b8cff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x0, top);
+  ctx.lineTo(x0 + (x1 - x0) * frac, top + (bottom - top) * frac); ctx.stroke(); ctx.lineWidth = 1;
+}
+function drop() {
+  cancelAnimationFrame(anim);
+  const p = params(), start = performance.now();
+  const step = now => {
+    const el = (now - start) / 1000;
+    draw(p, el);
+    if (el < p.t) anim = requestAnimationFrame(step);
+  };
+  anim = requestAnimationFrame(step);
+}
+['h', 'm', 'g'].forEach(id => $(id).addEventListener('input', () => { showValues(); draw(params(), 0); }));
+document.querySelectorAll('.presets button').forEach(b => b.onclick = () => { $('g').value = b.dataset.g; showValues(); draw(params(), 0); });
+$('go').onclick = drop;
+showValues(); draw(params(), 0);
+</script>
+</body>
+</html>
