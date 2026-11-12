@@ -79,10 +79,10 @@ const $ = id => document.getElementById(id);
 let state = {};
 
 function unlock() { $('gate').classList.add('hidden'); $('panel').classList.remove('hidden'); }
-try { if (sessionStorage.getItem('ws261031_admin') === '1') unlock(); } catch (e) {}
+try { if (sessionStorage.getItem('ws261113_admin') === '1') unlock(); } catch (e) {}
 $('pwBtn').onclick = () => {
   if ($('pw').value !== ADMIN_PW) { $('pwMsg').className = 'msg err'; $('pwMsg').textContent = '비밀번호가 다릅니다.'; return; }
-  try { sessionStorage.setItem('ws261031_admin', '1'); } catch (e) {}
+  try { sessionStorage.setItem('ws261113_admin', '1'); } catch (e) {}
   unlock();
 };
 $('pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('pwBtn').click(); });

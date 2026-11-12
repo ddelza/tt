@@ -49,7 +49,7 @@
 </main>
 
 <script>
-const LS_KEY = 'ws261031_me';
+const LS_KEY = WS.key + '_me';
 let me = null;
 try { me = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) {}
 let state = {};
