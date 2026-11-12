@@ -26,25 +26,13 @@
 
   <section id="panel" class="hidden">
     <h2>① 활동 열기 · 닫기</h2>
-    <p class="lead">켜는 순간 참여 화면에 바로 반영됩니다.</p>
+    <p class="lead">켜는 순간 참여 화면에 바로 반영됩니다. "모둠 들어가기"를 켜면 선착순이 시작돼요.</p>
     <div class="toggles" id="toggles"></div>
 
     <h2>📊 사전 설문 결과 <button class="btn sm pri" id="bigBtn" style="vertical-align:middle;margin-left:8px">⛶ 크게 보기 (화면 공유용)</button></h2>
     <div class="card" id="surveyBox"></div>
 
-    <h2>🐞 버그 헌터 정답 <button class="btn sm" onclick="document.getElementById('bugAns').classList.toggle('hidden')" style="vertical-align:middle;margin-left:8px">보기 / 숨기기</button></h2>
-    <div class="card hidden" id="bugAns">
-      <ol style="margin:0;padding-left:20px;line-height:1.9">
-        <li><b>낙하 시간 공식</b>: t = √(h ÷ g)가 아니라 <b>t = √(2h ÷ g)</b>. 20 m, 지구에서 앱은 1.43 s, 실제는 2.02 s</li>
-        <li><b>질량 효과</b>: 공기 저항을 무시하면 질량과 상관없이 같이 떨어진다. 앱은 무거울수록 빨리 떨어짐</li>
-        <li><b>속도 단위</b>: 도달 속도는 m/s²가 아니라 <b>m/s</b> (m/s²는 가속도 단위)</li>
-        <li><b>달의 중력가속도</b>: 16.2가 아니라 <b>1.62 m/s²</b> (지구의 약 1/6)</li>
-        <li><b>높이-시간 그래프와 애니메이션</b>: 직선(일정한 속도)이 아니라 <b>포물선</b>. 점점 빨라져야 한다</li>
-      </ol>
-      <p class="msg" style="margin-top:8px">덤: 공식이 틀려서 도달 속도도 틀림. 20 m에서 실제 v = √(2gh) ≈ 19.8 m/s, 앱은 14.0</p>
-    </div>
-
-    <h2>② 학년별 참여자 <span class="msg" id="userCount"></span></h2>
+    <h2>② 모둠 현황 <span class="msg" id="userCount"></span></h2>
     <div class="board" id="board"></div>
     <div id="unassigned" class="msg" style="margin-top:10px"></div>
 
@@ -57,10 +45,10 @@
     <div class="card">
       <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn" id="csvBtn">📥 전체 제출물 CSV 내려받기</button>
-        <button class="btn danger" id="clearGroups">학년 배정 모두 비우기</button>
+        <button class="btn danger" id="clearGroups">모둠 배정 모두 비우기</button>
         <button class="btn danger" id="resetAll">⚠️ 전체 초기화</button>
       </div>
-      <p class="msg" style="margin-top:10px">전체 초기화는 참여자·학년·제출물을 모두 지웁니다. 리허설 뒤 실제 연수 전에 한 번 누르세요.</p>
+      <p class="msg" style="margin-top:10px">전체 초기화는 참여자·모둠·제출물·투표를 모두 지웁니다. 리허설 뒤 실제 연수 전에 한 번 누르세요.</p>
     </div>
   </section>
 </main>
@@ -104,7 +92,7 @@ function render() {
   const users = state.users || {};
   const ucount = Object.keys(users).length;
   const assigned = GROUPS.reduce((n, g) => n + membersOf(state, g.id).length, 0);
-  $('userCount').textContent = `접속 ${ucount}명 · 학년 등록 ${assigned}명`;
+  $('userCount').textContent = `접속 ${ucount}명 · 모둠 배정 ${assigned}명`;
 
   $('toggles').innerHTML = ACTS.map(a => {
     const on = !!(state.open && state.open[a.id]);
@@ -117,21 +105,24 @@ function render() {
   $('board').innerHTML = GROUPS.map(g => {
     const ms = membersOf(state, g.id);
     const seats = [];
-    ms.forEach((m, i) => seats.push(`<div class="seat"><span>${i + 1}. ${esc(m.name)}</span>${moveOpts(m.uid)}</div>`));
-    if (!ms.length) seats.push('<div class="seat empty">아직 없음</div>');
-    return `<div class="gcol" style="--gc:${g.c};--gbg:${g.bg}"><h3>${g.name}<span>${ms.length}명</span></h3>${seats.join('')}</div>`;
+    for (let i = 0; i < GROUP_SIZE; i++) {
+      const m = ms[i];
+      seats.push(m ? `<div class="seat"><span>${i + 1}. ${esc(m.name)}</span>${moveOpts(m.uid)}</div>` : `<div class="seat empty">${i + 1}. 빈자리</div>`);
+    }
+    for (let i = GROUP_SIZE; i < ms.length; i++) seats.push(`<div class="seat"><span>+ ${esc(ms[i].name)}</span>${moveOpts(ms[i].uid)}</div>`);
+    return `<div class="gcol" style="--gc:${g.c};--gbg:${g.bg}"><h3>${g.name}<span>${ms.length}/${GROUP_SIZE}</span></h3>${seats.join('')}</div>`;
   }).join('');
 
   const un = Object.entries(users).filter(([uid]) => !groupIdOf(state, uid));
   $('unassigned').innerHTML = un.length
-    ? '학년 없음: ' + un.map(([uid, u]) => `<span style="margin-right:10px">${esc(u.name)} ${moveOpts(uid)}</span>`).join('')
+    ? '모둠 없음: ' + un.map(([uid, u]) => `<span style="margin-right:10px">${esc(u.name)} ${moveOpts(uid)}</span>`).join('')
     : '';
 
   // 제출 현황표: 사람 × 활동
   const subActs = ACTS.filter(a => a.type !== 'group');
   const rows = Object.entries(users).map(([uid, u]) => ({ uid, ...u, g: groupIdOf(state, uid) }))
     .sort((a, b) => GROUPS.findIndex(g => g.id === a.g) - GROUPS.findIndex(g => g.id === b.g) || a.t - b.t);
-  $('statusTable').innerHTML = `<tr><th>학년</th><th>이름</th>${subActs.map(a => `<th>${a.no}</th>`).join('')}</tr>` +
+  $('statusTable').innerHTML = `<tr><th>모둠</th><th>이름</th>${subActs.map(a => `<th>${a.no}</th>`).join('')}</tr>` +
     rows.map(r => `<tr><td>${groupBadge(r.g)}</td><td>${esc(r.name)}</td>${subActs.map(a => {
       const done = isDone(state, a, r.uid);
       return `<td>${done ? '✅' : '·'}</td>`;
@@ -174,7 +165,7 @@ function moveTo(uid, gid) {
 }
 
 $('clearGroups').onclick = () => {
-  if (confirm('학년 배정을 모두 비울까요? (제출물은 남습니다)')) ROOT.child('groups').remove();
+  if (confirm('모둠 배정을 모두 비울까요? (제출물은 남습니다)')) ROOT.child('groups').remove();
 };
 $('resetAll').onclick = () => {
   if (prompt('전체 초기화하려면 "초기화"라고 입력하세요.') === '초기화') ROOT.remove();
@@ -182,7 +173,7 @@ $('resetAll').onclick = () => {
 
 $('csvBtn').onclick = () => {
   const users = state.users || {};
-  const rows = [['활동', '학년', '이름', '제목', '링크', '내용', '좋아요', '제출 시각']];
+  const rows = [['활동', '모둠', '이름', '제목', '링크', '내용', '좋아요', '제출 시각']];
   for (const a of ACTS.filter(x => x.type === 'submit')) {
     for (const [uid, s] of Object.entries((state.subs && state.subs[a.id]) || {})) {
       const body = a.fields.filter(f => !['title', 'link'].includes(f.k)).map(f => s[f.k] ? `[${f.label}] ${s[f.k]}` : '').filter(Boolean).join('\n');

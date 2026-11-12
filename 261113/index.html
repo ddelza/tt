@@ -21,9 +21,8 @@
   <section id="loginView" class="hidden">
     <div class="card login">
       <h2 style="margin-top:4px">반갑습니다 👋</h2>
-      <p class="lead">이름이나 별명을 입력하고 학년을 고르면 바로 들어갑니다.<br>오늘 활동은 모두 이 이름으로 저장돼요.</p>
+      <p class="lead">이름이나 별명을 입력하면 바로 들어갑니다.<br>오늘 활동은 모두 이 이름으로 저장돼요.</p>
       <input id="nameInput" maxlength="12" placeholder="이름 또는 별명" autocomplete="off">
-      <div class="grade-pick"><label><input type="radio" name="grade" value="g1"> 고1</label><label><input type="radio" name="grade" value="g2"> 고2</label></div>
       <button class="btn pri" id="loginBtn" style="width:100%;padding:12px;font-size:16px">들어가기</button>
       <p class="msg" id="loginMsg"></p>
     </div>
@@ -32,7 +31,7 @@
   <!-- 활동 목록 -->
   <section id="hubView" class="hidden">
     <h2>오늘의 활동</h2>
-    <p class="lead">선생님이 열어 둔 활동만 참여할 수 있어요. 내 탐구 하나를 끝까지 키워 인터넷에 공개하는 것이 오늘의 목표입니다.</p>
+    <p class="lead">선생님이 열어 둔 활동만 참여할 수 있어요. 오늘은 API 앱 → Apps Script 배포 → GitHub 배포 → 내 탐구 기록 페이지 순서로 갑니다.</p>
     <div class="acts" id="actList"></div>
   </section>
 
@@ -63,7 +62,6 @@ $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.is
 async function login() {
   const name = $('nameInput').value.trim().replace(/\s+/g, ' ');
   if (!name) { $('loginMsg').textContent = '이름이나 별명을 입력해 주세요.'; return; }
-  const gEl = document.querySelector('input[name="grade"]:checked');
   $('loginBtn').disabled = true;
   try {
     const users = (await ROOT.child('users').once('value')).val() || {};
@@ -73,13 +71,9 @@ async function login() {
       if (!confirm(`"${name}" 이름이 이미 있어요.\n\n본인이면 [확인] → 이어서 들어갑니다.\n다른 분이면 [취소] → 별명을 바꿔 주세요.`)) { $('loginBtn').disabled = false; return; }
       uid = found[0];
     } else {
-      if (!gEl) { $('loginMsg').textContent = '학년을 골라 주세요.'; $('loginBtn').disabled = false; return; }
       uid = ROOT.child('users').push().key;
       await ROOT.child('users/' + uid).set({ name, t: firebase.database.ServerValue.TIMESTAMP });
     }
-    // 처음 들어올 때 고른 학년으로 등록 (이미 등록돼 있으면 그대로)
-    const grps = (await ROOT.child('groups').once('value')).val() || {};
-    if (!GROUPS.some(g => grps[g.id] && grps[g.id][uid]) && gEl) await ROOT.child(`groups/${gEl.value}/${uid}`).set({ name, t: Date.now() });
     me = { uid, name };
     try { localStorage.setItem(LS_KEY, JSON.stringify(me)); } catch (e) {}
     route();
@@ -158,10 +152,19 @@ function renderHub() {
   }).join('');
 }
 
+function copyText(btn) {
+  const t = btn.previousElementSibling.textContent;
+  const done = () => { btn.textContent = '✓ 복사됨'; setTimeout(() => btn.textContent = '복사', 1500); };
+  const fallback = () => { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+}
+
 /* ---------- 활동 진입 ---------- */
 function enterAct(act) {
   $('actTitle').textContent = `${act.no}. ${act.title}`;
   $('actDesc').textContent = act.desc;
+  if (act.prompts) $('actDesc').insertAdjacentHTML('beforeend', act.prompts.map(pr =>
+    `<div class="pbox"><b>${esc(pr.label)}</b><pre>${esc(pr.text)}</pre><button class="btn sm pri" onclick="copyText(this)">복사</button></div>`).join(''));
   if (act.links) $('actDesc').insertAdjacentHTML('beforeend', '<br>' + act.links.map(l =>
     `<a class="btn pri" style="margin:12px 8px 0 0;display:inline-block;text-decoration:none" href="${esc(l.href)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join(''));
   $('actForm').innerHTML = ''; $('actTabs').innerHTML = ''; $('actBody').innerHTML = '';
@@ -178,7 +181,7 @@ function renderStatus(act) {
     else if (open) html = `<div class="banner go">🏃 지금 열렸어요! 선착순입니다 — 상의한 색을 빨리 누르세요.</div>`;
     else html = `<div class="banner wait">⏳ 아직 닫혀 있어요. 그동안 같은 테이블 선생님들과 무슨 색을 고를지 상의해 두세요.</div>`;
   } else {
-    if (!gid && act.type !== 'survey') html = `<div class="banner wait">학년 정보가 없어요. 나가기 후 학년을 골라 다시 들어와 주세요.</div>`;
+    if (!gid && act.type !== 'survey') html = `<div class="banner wait">먼저 <a href="#act=group">0. 모둠 들어가기</a>를 해 주세요.</div>`;
     else if (!open) html = act.type === 'survey' ? `<div class="banner info">설문이 닫혀 있어요. 결과는 아래에서 볼 수 있습니다.</div>`
                                                  : `<div class="banner info">지금은 제출이 닫혀 있어요. 올라온 작품은 둘러볼 수 있습니다.</div>`;
   }
@@ -257,14 +260,14 @@ async function saveSub(act) {
   $('saveBtn').disabled = true;
   try {
     await ROOT.child(`subs/${act.id}/${me.uid}`).set({ ...v, name: me.name, group: myGroup(), t: firebase.database.ServerValue.TIMESTAMP });
-    msg.className = 'msg ok'; msg.textContent = '✓ 제출했어요! 아래에서 다른 친구들 것도 둘러보세요.';
+    msg.className = 'msg ok'; msg.textContent = '✓ 제출했어요! 아래에서 우리 모둠 작품을 둘러보세요.';
   } catch (e) { msg.className = 'msg err'; msg.textContent = '저장에 실패했어요. 다시 눌러 주세요.'; }
   $('saveBtn').disabled = false;
 }
 
 function renderTabs() {
   const gid = myGroup();
-  const tabs = [['mine', WS.mineLabel], ['all', '전체 둘러보기'], ...GROUPS.map(g => [g.id, g.name])];
+  const tabs = [['mine', '우리 모둠'], ['all', '전체 둘러보기'], ...GROUPS.map(g => [g.id, g.name])];
   if (!gid && viewTab === 'mine') viewTab = 'all';
   $('actTabs').innerHTML = tabs.filter(([k]) => k !== 'mine' || gid)
     .map(([k, l]) => `<button class="${viewTab === k ? 'on' : ''}" onclick="viewTab='${k}';renderLive()">${l}</button>`).join('');
@@ -321,10 +324,9 @@ function buildSurvey() {
     : `<div class="sv-opts">${q.opts.map((o, i) => `<label class="sv-opt"><input type="${q.type === 'multi' ? 'checkbox' : 'radio'}" name="sv_${q.k}" value="${esc(o)}" ${picked(q, o) ? 'checked' : ''}> ${esc(o)}</label>`).join('')}</div>`)).join('')}
     <div class="row"><button class="btn pri" id="svBtn">${s.t ? '다시 제출하기' : '제출하기'}</button><span class="msg" id="svMsg"></span></div></div>`;
   // '없음'과 다른 항목은 함께 고를 수 없게
-  const NONE = ['아직 없음', '거의 안 써 봄', '없음'];
-  document.querySelectorAll('.sv-opts input[type=checkbox]').forEach(cb => cb.addEventListener('change', () => {
+  document.querySelectorAll('input[name="sv_paid"]').forEach(cb => cb.addEventListener('change', () => {
     if (!cb.checked) return;
-    document.querySelectorAll(`input[name="${cb.name}"]`).forEach(o => { if (NONE.includes(cb.value) !== NONE.includes(o.value)) o.checked = false; });
+    document.querySelectorAll('input[name="sv_paid"]').forEach(o => { if ((cb.value === '없음') !== (o.value === '없음')) o.checked = false; });
   }));
   $('svBtn').onclick = saveSurvey;
 }

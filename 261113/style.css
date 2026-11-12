@@ -126,8 +126,7 @@ table.grid th{background:#f7f8fa;font-size:13px;color:var(--sub)}
 .big .sv-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 48px}
 @media(max-width:900px){.big .sv-cols{grid-template-columns:1fr}}
 .big .sv-cols .sv-n{grid-column:1/-1;margin:0}
-.grade-pick{display:flex;gap:10px;justify-content:center;margin:0 0 12px}
-.grade-pick label{border:2px solid var(--line);border-radius:10px;padding:8px 22px;cursor:pointer;font-weight:700;font-size:16px}
-.grade-pick label:has(input:checked){border-color:var(--pri);background:var(--pri-bg);color:var(--pri)}
-.grade-pick input{margin-right:4px}
-#board{grid-template-columns:repeat(2,1fr)}
+
+.pbox{margin-top:12px;background:#f7f8fa;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink)}
+.pbox b{font-size:13px;color:var(--pri)}
+.pbox pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:14px;margin:6px 0 8px;line-height:1.55}

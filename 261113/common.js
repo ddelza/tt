@@ -1,73 +1,82 @@
 // 2026-10-31 에듀테크 과학수업 연수 — 선생님 공동 실습 페이지 공용 설정
 // 2026-11-13 광남고 STEAM 클럽 바이브코딩 특강 — 학생 실습 페이지 공용 설정 (tt/261031을 개인 탐구용으로 고친 것)
-const WS = { key: 'ws261113', title: '바이브코딩 실습실', date: '2026. 11. 13.', mineLabel: '우리 학년' };
+// 2026-11-13 광남고 STEAM 클럽 바이브코딩 특강 — 학생 실습 페이지 공용 설정 (tt/261031 구조를 그대로 씀)
+const WS = { key: 'ws261113', title: '바이브코딩 실습실', date: '2026. 11. 13.' };
 
 firebase.initializeApp({ databaseURL: 'https://gwangsu-on-default-rtdb.firebaseio.com' });
 const db = firebase.database();
 const ROOT = db.ref('years/' + WS.key);
 
-// 모둠 대신 학년으로 나눈다 (로그인할 때 고름, 선착순 없음)
-const GROUP_SIZE = 99;
+const GROUP_SIZE = 3;
 const GROUPS = [
-  { id: 'g1', name: '고1', c: '#0b63c1', bg: '#e5effb' },
-  { id: 'g2', name: '고2', c: '#23895a', bg: '#e5f5ec' },
+  { id: 'red',    name: '빨강', c: '#d93d42', bg: '#fdecec' },
+  { id: 'orange', name: '주황', c: '#e2620f', bg: '#fff0e4' },
+  { id: 'yellow', name: '노랑', c: '#b98900', bg: '#fff7d6' },
+  { id: 'green',  name: '초록', c: '#23895a', bg: '#e5f5ec' },
+  { id: 'blue',   name: '파랑', c: '#0b63c1', bg: '#e5effb' },
 ];
 
-// 활동 순서 = 강의 흐름 (기획 → 사이트 배포 → 탐구 앱 → 버그 헌터 → 검증 → 소감)
+const GUIDE = 'https://ddelza.github.io/tt/padlet.html';
+// 활동 순서 = 강의 흐름 (모둠·설문 → API 앱 → Apps Script 설문 → GitHub 배포 → 탐구 기록 페이지 → 소감)
 const ACTS = [
-  { id: 'survey', no: 0, type: 'survey', title: '사전 설문 — 나는 어디쯤?',
+  { id: 'group', no: '0-1', type: 'group', title: '모둠 들어가기',
+    desc: '선생님이 열면 선착순입니다. 같이 앉은 친구들과 무슨 색을 고를지 먼저 상의하세요. 한 모둠은 3명까지, 먼저 다 차지한 색이 임자입니다!' },
+  { id: 'survey', no: '0-2', type: 'survey', title: '사전 설문 — 나는 어디쯤?',
     desc: '지금까지의 경험을 알려 주세요. 결과는 바로 아래와 화면에 함께 띄워 봅니다. (이름은 공개되지 않아요)' },
-  { id: 'plan', no: 1, type: 'submit', title: '내 탐구 네 줄 정리',
-    desc: '오늘 만들 사이트의 재료입니다. 아직 탐구가 없다면 궁금한 과학 질문 하나로 시작해도 돼요. 여기 쓴 내용을 그대로 복사해 Gemini에 붙여넣게 됩니다.',
+  { id: 'api', no: 1, type: 'submit', title: 'API로 진짜 데이터 가져오는 앱',
+    desc: '시뮬레이션은 해 봤으니, 이번엔 기관이 실시간으로 내놓는 진짜 데이터를 가져옵니다. 아래 예시로 시작해 내 관심 주제로 바꿔 보세요. Gemini Canvas에서 만들고 공유 링크를 올립니다.',
+    links: [{ href: GUIDE + '#panel-inter', label: '🔌 API 예시 더 보기 (중급 탭)' }],
+    prompts: [
+      { label: '날씨 (Open-Meteo, 인증키 필요 없음)', text: 'Open-Meteo API(https://api.open-meteo.com/v1/forecast)를 fetch로 불러와서, 위도·경도를 입력하면 그 지역의 현재 기온과 앞으로 24시간 기온 그래프를 보여주는 html을 만들어줘. 예시로 경기도 광주시(위도 37.4, 경도 127.26)를 넣어줘. 인증키는 필요 없어. 한국어로, html 파일 하나로 만들어줘.' },
+      { label: '화합물 (PubChem, 인증키 필요 없음)', text: 'PubChem API(https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/)를 fetch로 불러와서, 화합물 영어 이름을 입력하면 분자식, 분자량, IUPAC 이름과 구조 그림을 보여주는 html을 만들어줘. 예시로 caffeine을 검색해줘. 인증키는 필요 없어. 한국어로, html 파일 하나로 만들어줘.' },
+    ],
+    fields: [
+      { k: 'title', label: '앱 제목', ph: '예: 우리 동네 기온 그래프', req: true },
+      { k: 'apiName', label: '사용한 API', ph: '예: Open-Meteo' },
+      { k: 'link', label: '공유 링크', type: 'url', ph: 'Gemini Canvas 공유 링크 (https://...)' },
+      { k: 'prompt', label: '사용한 프롬프트', type: 'area' },
+      { k: 'memo', label: '막혔던 점 · 해결한 방법', type: 'area' },
+    ] },
+  { id: 'gas', no: 2, type: 'submit', title: 'Apps Script로 설문 앱 배포하기',
+    desc: '이번엔 데이터가 쌓이는 앱입니다. 구글 시트에 응답이 저장되는 설문 페이지를 만들어 Apps Script 웹 앱으로 배포하세요. Canvas 말고 Gemini 일반 채팅에서 Code.gs와 Index.html을 받습니다. 다 되면 친구 설문에도 응답해 보세요! ※ 설문에 이름·연락처는 묻지 마세요.',
+    prompts: [
+      { label: 'Gemini 일반 채팅에 붙여넣기 ([ ] 부분을 바꾸세요)', text: '구글 Apps Script로 [설문 주제: 예) 우리 반 수면 시간과 집중력] 설문 웹앱을 만들어줘.\n파일은 Code.gs와 Index.html 두 개로 만들어줘.\n질문: [질문 3~5개. 예) 평균 수면 시간(객관식), 오후 집중도 1~5점, 하고 싶은 말(주관식)]\n제출하면 이 스크립트가 연결된 구글 시트에 시간과 응답이 한 줄씩 저장되고, 화면 아래에 문항별 응답 수 요약이 보이게 해줘.\n이름이나 연락처는 묻지 마.\n처음 하는 사람도 따라 할 수 있게, 구글 시트에서 [확장 프로그램 → Apps Script] 여는 것부터 [배포 → 새 배포 → 웹 앱, 액세스: 모든 사용자]까지 순서대로 알려줘.' },
+    ],
+    fields: [
+      { k: 'title', label: '설문 주제', ph: '예: 수면 시간과 집중력', req: true },
+      { k: 'link', label: '웹 앱 주소 (…/exec)', type: 'url', ph: 'https://script.google.com/macros/s/…/exec', req: true },
+      { k: 'prompt', label: '사용한 프롬프트', type: 'area' },
+      { k: 'memo', label: '배포하며 막혔던 점 · 해결 방법', type: 'area', ph: '예: "확인되지 않은 앱" 경고 → 고급 → 이동' },
+    ] },
+  { id: 'github', no: 3, type: 'submit', title: '같은 설문을 GitHub Pages로도 배포하기',
+    desc: 'GitHub Pages는 화면 파일만 보여 줄 뿐 Code.gs를 실행하지 못합니다. 그래서 Apps Script는 데이터를 저장하는 서버로 남기고, GitHub에 올린 index.html이 그 서버 주소(/exec)를 부르게 바꿉니다. 화면(프론트엔드)과 서버(백엔드)가 나뉘는 구조예요. GitHub에는 index.html 하나만 올리면 됩니다.',
+    links: [{ href: 'https://github.com/new', label: '🗂 GitHub 새 저장소 만들기' }],
+    prompts: [
+      { label: '같은 Gemini 대화에 이어서 붙여넣기', text: '방금 만든 Apps Script 설문을 GitHub Pages에서도 열리게 하고 싶어.\nGitHub Pages는 Code.gs를 실행할 수 없으니 이렇게 바꿔줘.\n1) Code.gs에 doPost(응답을 시트에 저장)와 doGet(문항별 응답 수를 JSON으로 돌려주기)을 추가해줘.\n2) GitHub에 올릴 index.html은 google.script.run 대신 fetch로 웹 앱 주소를 부르게 해줘. POST는 Content-Type을 text/plain으로 보내줘.\n웹 앱 주소: [내 …/exec 주소 붙여넣기]\n바뀐 Code.gs 전체와 index.html 전체를 줘. 그리고 Apps Script를 [배포 관리 → 연필 → 새 버전]으로 다시 배포하는 방법도 알려줘.' },
+    ],
+    fields: [
+      { k: 'title', label: '저장소 이름', ph: '예: sleep-survey', req: true },
+      { k: 'link', label: 'GitHub Pages 주소', type: 'url', ph: 'https://아이디.github.io/저장소이름/', req: true },
+      { k: 'memo', label: '두 방식을 써 보니 다른 점', type: 'area', ph: '예: GitHub 주소가 더 짧고 Google 안내 문구가 안 뜸' },
+      { k: 'fix', label: '막혔던 점 · 해결 방법', type: 'area', ph: '예: Index.html로 올려서 404 → index.html로 바꿈' },
+    ] },
+  { id: 'record', no: 4, type: 'submit', title: '나만의 탐구 기록 페이지 만들고 공유하기',
+    desc: '이제 배운 것을 내 탐구에 씁니다. 탐구 질문·방법·결과·결론이 담긴 기록 페이지를 만들어 GitHub Pages로 공개하고, 친구들 페이지에 ♥를 눌러 주세요. 오늘 만든 API 앱이나 설문을 링크로 붙여도 좋아요.',
+    prompts: [
+      { label: '탐구 기록 페이지 프롬프트 ([ ] 부분을 바꾸세요)', text: '내 과학 탐구를 기록하는 한 페이지 홈페이지를 만들어줘.\n구성: 제목과 탐구 질문 / 방법 / 결과 표와 그래프 / 결론과 한계 / 참고 자료 / 관련 앱 링크 버튼\n탐구 질문: [ ]\n방법: [ ]\n결과 데이터: [ ]\n보는 사람: [예: 탐구 발표회 관람객]\n휴대폰에서도 잘 보이게, 한국어로, html 파일 하나로 만들어줘.\n없는 데이터는 지어내지 말고 [자료 필요]라고 표시해줘.' },
+    ],
     fields: [
       { k: 'title', label: '탐구 제목', ph: '예: 온도에 따른 효소 반응 속도', req: true },
-      { k: 'field', label: '분야', ph: '예: 생명과학' },
-      { k: 'question', label: '① 탐구 질문', type: 'area', ph: '무엇이 궁금했나요?' },
-      { k: 'method', label: '② 방법', type: 'area', ph: '어떤 변인을 어떻게 측정했나요? (계획 단계면 계획)' },
-      { k: 'result', label: '③ 결과 또는 예상', type: 'area', ph: '숫자 표, 관찰 기록 등 (개인정보 금지)' },
-      { k: 'audience', label: '④ 보는 사람', ph: '예: 탐구 발표회 관람객, 후배' },
+      { k: 'link', label: '기록 페이지 주소', type: 'url', ph: 'https://아이디.github.io/저장소이름/', req: true },
+      { k: 'summary', label: '탐구 한 줄 소개', type: 'area' },
+      { k: 'memo', label: 'AI가 틀렸거나 내가 직접 고친 부분', type: 'area', ph: '예: 그래프 단위가 틀려서 바로잡음' },
     ] },
-  { id: 'site', no: 2, type: 'submit', title: '내 탐구 사이트 공개 (GitHub Pages)',
-    desc: 'Gemini Canvas로 탐구 홈페이지를 만들고, index.html로 저장해 GitHub에 올린 뒤 Pages를 켜세요. 휴대폰에서 열리는 주소를 올리면 완료입니다.',
-    links: [{ href: 'https://github.com/new', label: '🗂 새 저장소 만들기' }],
-    fields: [
-      { k: 'title', label: '사이트 제목', ph: '예: 효소는 몇 도를 좋아할까?', req: true },
-      { k: 'link', label: '내 사이트 주소', type: 'url', ph: 'https://아이디.github.io/저장소이름/', req: true },
-      { k: 'prompt', label: '사용한 프롬프트', type: 'area' },
-      { k: 'memo', label: '배포하며 막혔던 점 · 해결 방법', type: 'area', ph: '예: 파일 이름이 index.html.html로 저장돼 있었음' },
-    ] },
-  { id: 'app', no: 3, type: 'submit', title: '탐구 앱 만들고 붙이기',
-    desc: '시뮬레이션은 이미 해 봤으니 이번엔 진짜 데이터를 다뤄 봅니다. 내 측정값을 분석하는 앱, 공개 API로 실제 데이터를 가져오는 앱, 판정 계산기, 탐구 퀴즈 중 하나를 골라 app.html로 올리고 홈페이지 버튼과 연결하세요.',
-    links: [{ href: 'https://ddelza.github.io/tt/padlet.html#vision-ocr', label: '🔌 API 예시 프롬프트 (중급 탭)' }],
-    fields: [
-      { k: 'title', label: '앱 제목', ph: '예: 온도별 반응 속도 분석기', req: true },
-      { k: 'kind', label: '앱 유형', ph: '데이터 분석기 / API 앱 / 계산기 / 퀴즈' },
-      { k: 'link', label: '앱 주소', type: 'url', ph: 'https://아이디.github.io/저장소이름/app.html', req: true },
-      { k: 'prompt', label: '사용한 프롬프트', type: 'area' },
-      { k: 'memo', label: '대화로 고친 점', type: 'area' },
-    ] },
-  { id: 'bug', no: 4, type: 'submit', noVote: true, title: '버그 헌터 — AI가 만든 앱의 과학 오류 찾기',
-    desc: 'AI가 만든 자유낙하 시뮬레이터에 과학적 오류가 숨어 있습니다. 화면은 그럴듯하지만 틀린 곳이 여러 군데예요. 손계산과 물리 지식으로 찾아내세요!',
-    links: [{ href: 'bug.html', label: '🐞 문제의 시뮬레이터 열기' }],
-    fields: [
-      { k: 'title', label: '찾은 오류 개수', ph: '예: 3개', req: true },
-      { k: 'e1', label: '오류 1 — 무엇이, 왜 틀렸나', type: 'area' },
-      { k: 'e2', label: '오류 2', type: 'area' },
-      { k: 'e3', label: '오류 3', type: 'area' },
-      { k: 'how', label: '어떻게 확인했나 (손계산 등)', type: 'area' },
-    ] },
-  { id: 'verify', no: 5, type: 'submit', noVote: true, title: '내 앱 검증 기록',
-    desc: '이번엔 내 앱 차례입니다. 값 세 개를 넣고 직접 계산한 결과와 비교하세요. 극단값(0, 음수, 아주 큰 값)과 단위도 확인합니다.',
-    fields: [
-      { k: 'title', label: '검증 결과 한 줄', ph: '예: 3개 중 2개 일치, 단위 오류 1개 수정', req: true },
-      { k: 'calc', label: '손계산 비교 (입력값 → 앱 결과 / 내 계산)', type: 'area', ph: '예: 30℃ → 앱 0.42 / 계산 0.42 ✓' },
-      { k: 'fix', label: '찾은 문제와 고친 방법', type: 'area' },
-    ] },
-  { id: 'reflect', no: 6, type: 'submit', noVote: true, title: '오늘을 마치며',
-    desc: '오늘 만든 주소는 여러분의 것입니다. 끝나면 구글과 GitHub에서 꼭 로그아웃하세요.',
+  { id: 'reflect', no: 5, type: 'submit', noVote: true, title: '소감문',
+    desc: '오늘 만든 주소들은 여러분의 것입니다. 끝나면 구글과 GitHub에서 꼭 로그아웃하세요.',
     fields: [
       { k: 'title', label: '한 줄 소감', req: true },
-      { k: 'next', label: '이 사이트에 다음에 더하고 싶은 것', type: 'area' },
+      { k: 'best', label: '가장 기억에 남는 순간', type: 'area' },
+      { k: 'next', label: '다음에 만들어 보고 싶은 것', type: 'area' },
     ] },
 ];
 // 0-2 사전 설문 문항
