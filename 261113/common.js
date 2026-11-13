@@ -28,6 +28,7 @@ const ACTS = [
     prompts: [
       { label: '예시 프롬프트 ([ ] 부분을 바꾸세요)', text: '[주제: 예) 포물선 운동] 시뮬레이션을 만들어줘.\n사용자: [예) 고등학생]\n조작: [예) 발사 각도와 처음 속력을 슬라이더로 바꾸기]\n보여줄 것: [예) 날아가는 궤적 애니메이션, 최고 높이와 수평 도달 거리]\n과학적으로 정확한 식을 쓰고, 화면에 식도 함께 보여줘. 한국어로, html 파일 하나로 만들어줘.' },
     ],
+    links: [{ href: 'https://ddelza.github.io/tt/', label: '📘 바이브코딩 팁·예시 모음 (ddelza.github.io/tt)' }],
     fields: [
       { k: 'title', label: '앱 제목', ph: '예: 포물선 운동 시뮬레이터', req: true },
       { k: 'link', label: '공유 링크', type: 'url', ph: 'Gemini Canvas 공유 링크 (https://...)' },
